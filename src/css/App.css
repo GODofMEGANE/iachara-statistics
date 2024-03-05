@@ -1,0 +1,51 @@
+:root {
+  --bgcolor: #FFF8D3;
+  --contentcolor: #FFFDED;
+  --blockcolor: #A0CED9;
+}
+
+body {
+  background-color: var(--bgcolor);
+}
+
+.outline {
+  border: 0.5rem outset var(--blockcolor);
+  border-radius: 12px;
+  font: bold 1rem sans-serif;
+  margin: 1rem;
+  padding: 1rem;
+  outline-offset: 0.5rem;
+  background-color: var(--contentcolor);
+}
+
+details {
+  border: 1px solid #ccc;
+}
+
+details:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+details summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  background: #e4e4e4;
+  color: #242323;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+details summary::before {
+  content: '+';
+  margin-right: 20px;
+}
+
+details[open] summary::before {
+  content: '-';
+  margin-right: 20px;
+}
+
+.charasheet-link {
+  text-align: right;
+}
