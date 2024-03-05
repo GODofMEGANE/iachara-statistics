@@ -1,4 +1,4 @@
-type IacharaSheet = {
+type CharaSheet = {
     id: number,
     icon: string[],
     name: string,
@@ -289,7 +289,9 @@ type IacharaSheet = {
     updatedAt: string,
     deletedAt: string | null,
     deleted: boolean
-}[];
+};
+
+type IacharaSheet = CharaSheet[];
 
 type StatisticsAverage = {
     str: number,
@@ -318,3 +320,18 @@ type StatisticsAverage = {
         }
     }
 };
+
+type SortAndFilterMode = {
+    sortBy: {
+        priority: number,
+        condition: string,
+        subCondition: string | null,
+        order: string,
+    }[],
+    filterBy: {
+        condition: string,
+        subCondition: string | null,
+        min: number,
+        max: number,
+    }[]
+}
