@@ -304,6 +304,7 @@ type StatisticsAverage = {
     edu: number,
     validNumber: number,
     additional: {
+        memoLength: number,
         age: {
             average: number,
             validNumber: number,

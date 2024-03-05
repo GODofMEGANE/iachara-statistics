@@ -15,6 +15,7 @@ const sort_options: { value: string, label: string }[] = [
   { value: "int", label: "INT" },
   { value: "edu", label: "EDU" },
   { value: "san", label: "現在SAN値" },
+  { value: "memo", label: "メモ欄文字数" },
   { value: "age", label: "年齢" },
   { value: "height", label: "身長" },
   { value: "skill", label: "技能値" },
@@ -108,6 +109,7 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
   const [auth_status, setAuthStatus] = useState<'pending' | 'success' | 'failed' | 'none'>('none');
   const [login_id, setLoginId] = useState<string>(((document.cookie + ';').match('userid=([^¥S;]*)') ?? "")[1]);
   const [password, setPassword] = useState<string>("");
+  const [raw_json, setRawJson] = useState<string>("");
   async function getCharasheet(login_id: string, password: string): Promise<IacharaSheet> {
     setAuthStatus('pending');
     document.cookie = `userid=${login_id}`;
@@ -168,26 +170,42 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
 
   return (
     <div className='outline'>
-      <input type='text' id='login_id' className='input' value={login_id} onChange={(evt) => { setLoginId(evt.target.value) }} placeholder='ID' onKeyDown={(e) => {
+      ここにいあきゃらのIDとパスワードを入力
+      <input type='text' id='login_id' className='input' value={login_id} onChange={(evt) => { setLoginId(evt.target.value) }} placeholder='ユーザーID' onKeyDown={(e) => {
         if (e.key === "Enter") getCharasheet(login_id, password).then((result) => {
           console.log(result);
           setCharasheet(result);
         })
       }} />
-      <input type='password' id='password' className='input' value={password} onChange={(evt) => { setPassword(evt.target.value) }} placeholder='PASSWORD' onKeyDown={(e) => {
+      <input type='password' id='password' className='input' value={password} onChange={(evt) => { setPassword(evt.target.value) }} placeholder='パスワード' onKeyDown={(e) => {
         if (e.key === "Enter") getCharasheet(login_id, password).then((result) => {
+          console.log(result);
+          setCharasheet(result);
+        })
+      }} />
+      <input type='button' id='submit' value="決定" onClick={() => {
+        getCharasheet(login_id, password).then((result) => {
           console.log(result);
           setCharasheet(result);
         })
       }} />
       {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) : auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) : auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) : (<span></span>)}
       <br />
-      <input type='button' id='submit' value="SUBMIT" onClick={() => {
-        getCharasheet(login_id, password).then((result) => {
-          console.log(result);
-          setCharasheet(result);
-        })
+      ネットリテラシーのある方はこちらに
+      <input type='text' id='raw_json' className='input' style={{width: "20rem"}} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => {
+        if (e.key === "Enter") try{
+          setCharasheet(JSON.parse(raw_json));
+        }catch(e){
+          alert("JSONの構文解析に失敗しました");
+        }
       }} />
+      <input type='button' id='submit-rawjson' value="決定" onClick={() => {
+        try{
+          setCharasheet(JSON.parse(raw_json));
+        }catch(e){
+          alert("JSONの構文解析に失敗しました");
+        }
+      }} title={"1.いあきゃらのマイページを開く\n2.F12を押しNetworkタブを開く\n3.一度ページをリロードする\n4.いっぱい出てくるのでNameがcharasheetのものを探してクリックする\n5.右ウインドウでResponseタブをクリックして全てコピー\n6.左の入力欄にペーストしてこのボタンをクリック"} />
     </div>
   )
 }
@@ -213,6 +231,7 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
     edu: 0,
     validNumber: 0,
     additional: {
+      memoLength: 0,
       age: {
         average: 0,
         validNumber: 0,
@@ -246,6 +265,7 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
       else {
         ignore_list.abilities.push(charasheet[i].data.profile.name);
       }
+      statistics_average.additional.memoLength += charasheet[i].data.memo.length;
       if (!isNaN(parseInt(charasheet[i].data.profile.age))) {
         statistics_average.additional.age.average += parseInt(charasheet[i].data.profile.age);
         statistics_average.additional.age.validNumber++;
@@ -284,6 +304,7 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
     statistics_average.siz /= statistics_average.validNumber;
     statistics_average.int /= statistics_average.validNumber;
     statistics_average.edu /= statistics_average.validNumber;
+    statistics_average.additional.memoLength /= charasheet.length;
     statistics_average.additional.age.average /= statistics_average.additional.age.validNumber;
     statistics_average.additional.height.average /= statistics_average.additional.height.validNumber;
     statistics_average.additional.sex.maleRate /= statistics_average.additional.sex.validNumber;
@@ -305,7 +326,8 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
           平均SIZ:{Math.round(statistics_average.siz * 100) / 100}(平均:13.0)<br />
           平均INT:{Math.round(statistics_average.int * 100) / 100}(平均:13.0)<br />
           平均EDU:{Math.round(statistics_average.edu * 100) / 100}(平均:13.5)<br />
-          (<span title={"無視したキャラシ\n\n" + ignore_list.abilities.join("\n")}>有効キャラシ数:{statistics_average.validNumber}</span>)
+          (<span title={"無視したキャラシ\n\n" + ignore_list.abilities.join("\n")}>有効キャラシ数:{statistics_average.validNumber}</span>)<br />
+          平均メモ欄文字数:{Math.round(statistics_average.additional.memoLength * 100) / 100}<br />
         </p>
         これより下の統計はキャラシに書かれた単位が合っていない場合おかしな結果が表示される場合があります<br />
         <p>
@@ -401,6 +423,8 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         return chara.data.abilities.edu.value.toString();
       case 'san':
         return chara.data.abilities.sanCurrent.toString();
+      case 'memo':
+        return chara.data.memo.length.toString();
       case 'age':
         if (isNaN(parseInt(chara.data.profile.age))) return "不明";
         return chara.data.profile.age;
@@ -492,6 +516,11 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
             return order * (a.data.abilities.sanCurrent - b.data.abilities.sanCurrent)
+          });
+          break;
+        case 'memo':
+          charasheet.sort((a, b) => {
+            return order * (a.data.memo.length - b.data.memo.length)
           });
           break;
         case 'age':
