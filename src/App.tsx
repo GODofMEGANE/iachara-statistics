@@ -738,6 +738,8 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           break;
         case 'db':
           charasheet.sort((a, b) => {
+            if (a.data.abilities.sanCurrent < 0) return 1;
+            else if (b.data.abilities.sanCurrent < 0) return -1;
             const a_db = (a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) + (a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff);
             const b_db = (b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff) + (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff);
             return order * (a_db - b_db);
