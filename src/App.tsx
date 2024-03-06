@@ -2,6 +2,9 @@ import React, { ReactPropTypes, useState, useMemo, ReactElement } from 'react';
 import './css/App.css';
 import { JsxElement, setTextRange } from 'typescript';
 import Select from 'react-select';
+import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
+import Nouislider, { Formatter } from "nouislider-react";
+import "nouislider/distribute/nouislider.css";
 
 const sort_options: { value: string, label: string }[] = [
   { value: "create", label: "作成日時" },
@@ -15,6 +18,7 @@ const sort_options: { value: string, label: string }[] = [
   { value: "int", label: "INT" },
   { value: "edu", label: "EDU" },
   { value: "san", label: "現在SAN値" },
+  { value: "db", label: "ダメージボーナス" },
   { value: "memo", label: "メモ欄文字数" },
   { value: "age", label: "年齢" },
   { value: "height", label: "身長" },
@@ -192,17 +196,17 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
       {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) : auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) : auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) : (<span></span>)}
       <br />
       ネットリテラシーのある方はこちらに
-      <input type='text' id='raw_json' className='input' style={{width: "20rem"}} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => {
-        if (e.key === "Enter") try{
+      <input type='text' id='raw_json' className='input' style={{ width: "20rem" }} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => {
+        if (e.key === "Enter") try {
           setCharasheet(JSON.parse(raw_json));
-        }catch(e){
+        } catch (e) {
           alert("JSONの構文解析に失敗しました");
         }
       }} />
       <input type='button' id='submit-rawjson' value="決定" onClick={() => {
-        try{
+        try {
           setCharasheet(JSON.parse(raw_json));
-        }catch(e){
+        } catch (e) {
           alert("JSONの構文解析に失敗しました");
         }
       }} title={"1.いあきゃらのマイページを開く\n2.F12を押しNetworkタブを開く\n3.一度ページをリロードする\n4.いっぱい出てくるのでNameがcharasheetのものを探してクリックする\n5.右ウインドウでResponseタブをクリックして全てコピー\n6.左の入力欄にペーストしてこのボタンをクリック"} />
@@ -338,26 +342,102 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
       </div>
       <hr />
       <div id="sort-filter">
-        <Select options={sort_options} onChange={(selected) => {
+        <Select options={sort_options} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.sortBy[0].condition = selected!.value;
           setFiltMode(new_mode);
         }} />
-        {filt_mode.sortBy[0].condition === "skill" ? <Select options={skill_list} onChange={(selected) => {
+        {filt_mode.sortBy[0].condition === "skill" ? <Select options={skill_list} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.sortBy[0].subCondition = selected!.value;
           setFiltMode(new_mode);
         }} /> : <></>}
         を使って
-        <Select options={sort_order} onChange={(selected) => {
+        <Select options={sort_order} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.sortBy[0].order = selected!.value;
           setFiltMode(new_mode);
         }} />
         でソート
+        <br />
+        <hr />
+        <Filters filt_mode={filt_mode} setFiltMode={setFiltMode} />
+        <span className='can-click-span' onClick={() => {
+          let new_mode: SortAndFilterMode = { ...filt_mode };
+          new_mode.filterBy.push({
+            condition: "create",
+            subCondition: null,
+            min: 0,
+            max: Date.now(),
+          });
+          setFiltMode(new_mode);
+        }}>
+          表示条件を追加<CiCirclePlus size={"1.5rem"} style={{ margin: "0.5rem", verticalAlign: "middle" }} />
+        </span>
       </div>
       <br />
       <CharaList charasheet={charasheet} mode={filt_mode} />
+    </div>
+  );
+}
+
+function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, setFiltMode: React.Dispatch<React.SetStateAction<SortAndFilterMode>> }) {
+  let filt_list: ReactElement[] = [];
+  filt_mode.filterBy.forEach(function (elm, index) {
+    let range_max: number =
+      (elm.condition === "str" || elm.condition === "con" || elm.condition === "pow" || elm.condition === "dex" || elm.condition === "app" || elm.condition === "siz" || elm.condition === "int") ? 18 :
+        (elm.condition === "edu") ? 21 :
+          (elm.condition === "height") ? 200 :
+            (elm.condition === "skill") ? 100 :
+              (elm.condition === "db") ? 5 :
+                (elm.condition === "create" || elm.condition === "update") ? Date.now() : 1;
+    let format: any = {
+      to: function (value: number) {
+        if (elm.condition === "create" || elm.condition === "update") {
+          return (new Date(value)).toLocaleDateString('ja-JP');
+        }
+        if (elm.condition === "db") {
+          const db_list = ["-1d6", "-1d4", "+0", "+1d4", "+1d6", "+1d6以上"];
+          if(value > 5){
+            value = 5;
+          }
+          return db_list[value];
+        }
+        return Math.round(value);
+      }
+    }
+    filt_list.push(
+      <div>
+        <Select options={sort_options} defaultValue={{ value: elm.condition, label: sort_options.find((option) => option.value === elm.condition)?.label }} onChange={(selected) => {
+          let new_mode = { ...filt_mode };
+          filt_mode.filterBy[index].condition = selected!.value;
+          setFiltMode(new_mode);
+        }} />
+        {elm.condition === "skill" ? <Select options={skill_list} isSearchable={true} onChange={(selected) => {
+          let new_mode = { ...filt_mode };
+          filt_mode.filterBy[index].subCondition = selected!.value;
+          setFiltMode(new_mode);
+        }} /> : <></>}
+        <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : 0), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[format, format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
+          let new_mode = { ...filt_mode };
+          filt_mode.filterBy[index].min = Number(values[0]);
+          filt_mode.filterBy[index].max = Number(values[1]);
+          setFiltMode(new_mode);
+        }} connect />
+        <span className='can-click-span' onClick={() => {
+          let new_mode: SortAndFilterMode = { ...filt_mode };
+          new_mode.filterBy.splice(index, 1);
+          setFiltMode(new_mode);
+        }}>
+          この条件を削除<CiCircleMinus size={"1.5rem"} style={{ margin: "0.5rem", verticalAlign: "middle" }} />
+        </span>
+        <hr />
+      </div>
+    );
+  });
+  return (
+    <div>
+      {filt_list}
     </div>
   );
 }
@@ -399,6 +479,54 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     return answer;
   }
 
+  function isPassFilt(chara: CharaSheet, filt: { condition: string, subCondition: string | null, min: number, max: number }): boolean {
+    switch (filt.condition) {
+      case 'create':
+        return (Date.parse(chara.createdAt) >= filt.min && Date.parse(chara.createdAt) <= filt.max);
+      case 'update':
+        return (Date.parse(chara.createdAt) >= filt.min && Date.parse(chara.createdAt) <= filt.max);
+      case 'str':
+        return (chara.data.abilities.str.value >= filt.min && chara.data.abilities.str.value <= filt.max);
+      case 'con':
+        return (chara.data.abilities.con.value >= filt.min && chara.data.abilities.con.value <= filt.max);
+      case 'pow':
+        return (chara.data.abilities.pow.value >= filt.min && chara.data.abilities.pow.value <= filt.max);
+      case 'dex':
+        return (chara.data.abilities.dex.value >= filt.min && chara.data.abilities.dex.value <= filt.max);
+      case 'app':
+        return (chara.data.abilities.app.value >= filt.min && chara.data.abilities.app.value <= filt.max);
+      case 'siz':
+        return (chara.data.abilities.siz.value >= filt.min && chara.data.abilities.siz.value <= filt.max);
+      case 'int':
+        return (chara.data.abilities.int.value >= filt.min && chara.data.abilities.int.value <= filt.max);
+      case 'edu':
+        return (chara.data.abilities.edu.value >= filt.min && chara.data.abilities.edu.value <= filt.max);
+      case 'san':
+        return (chara.data.abilities.sanCurrent >= filt.min && chara.data.abilities.sanCurrent <= filt.max);
+      case 'db':
+        const db_list = [[2, 12], [13, 16], [17, 24], [25, 32], [33, 40], [41, Infinity]];
+        if(filt.min > 5) filt.min = 5;
+        if(filt.max > 5) filt.max = 5;
+        return (chara.data.abilities.str.value + chara.data.abilities.siz.value >= db_list[filt.min][0] && chara.data.abilities.str.value + chara.data.abilities.siz.value <= db_list[filt.max][1]);
+      case 'memo':
+        return (chara.data.memo.length >= filt.min && chara.data.memo.length <= filt.max)
+      case 'age':
+        if (isNaN(parseInt(chara.data.profile.age))) return false;
+        return (parseInt(chara.data.profile.age) >= filt.min && parseInt(chara.data.profile.age) <= filt.max);
+      case 'height':
+        if (isNaN(parseInt(chara.data.profile.height))) return false;
+        return (parseInt(chara.data.profile.height) >= filt.min && parseInt(chara.data.profile.height) <= filt.max);
+      case 'skill':
+        if (filt.subCondition === null || filt.subCondition === undefined) {
+          return true;
+        }
+        let skillsum = getSkillSum(chara, filt.subCondition);
+        return (skillsum >= filt.min && skillsum <= filt.max);
+      default:
+        return true;
+    }
+  }
+
   function getCompareNum(chara: CharaSheet, condition: string, subCondition?: string): string {
     switch (condition) {
       case 'create':
@@ -423,6 +551,31 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         return chara.data.abilities.edu.value.toString();
       case 'san':
         return chara.data.abilities.sanCurrent.toString();
+      case 'db':
+        let strsiz = chara.data.abilities.str.value + chara.data.abilities.siz.value;
+        let result = "不明";
+        if ((2 <= strsiz) && (strsiz <= 12)) {
+          result = "-1D6";
+        }
+        else if ((13 <= strsiz) && (strsiz <= 16)) {
+          result = "-1D4";
+        }
+        else if ((17 <= strsiz) && (strsiz <= 24)) {
+          result = "+0";
+        }
+        else if ((25 <= strsiz) && (strsiz <= 32)) {
+          result = "+1D4";
+        }
+        else if ((33 <= strsiz) && (strsiz <= 40)) {
+          result = "+1D6";
+        }
+        else if ((41 <= strsiz) && (strsiz <= 56)) {
+          result = "+2D6";
+        }
+        else{
+          result = `+${Math.floor((strsiz-57)/16)+3}D6`;
+        }
+        return result;
       case 'memo':
         return chara.data.memo.length.toString();
       case 'age':
@@ -442,6 +595,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
   }
 
   const sortAndFiltered = useMemo<ReactElement[]>(function (): ReactElement[] {
+    let chara_index = 1;
     const charalist: ReactElement[] = [];
     mode.sortBy.sort((a, b) => {
       return b.priority - a.priority;
@@ -459,82 +613,89 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.str.value - b.data.abilities.str.value)
+            return order * (a.data.abilities.str.value - b.data.abilities.str.value);
           });
           break;
         case 'con':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.con.value - b.data.abilities.con.value)
+            return order * (a.data.abilities.con.value - b.data.abilities.con.value);
           });
           break;
         case 'pow':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.pow.value - b.data.abilities.pow.value)
+            return order * (a.data.abilities.pow.value - b.data.abilities.pow.value);
           });
           break;
         case 'dex':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.dex.value - b.data.abilities.dex.value)
+            return order * (a.data.abilities.dex.value - b.data.abilities.dex.value);
           });
           break;
         case 'app':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.app.value - b.data.abilities.app.value)
+            return order * (a.data.abilities.app.value - b.data.abilities.app.value);
           });
           break;
         case 'siz':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.siz.value - b.data.abilities.siz.value)
+            return order * (a.data.abilities.siz.value - b.data.abilities.siz.value);
           });
           break;
         case 'int':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.int.value - b.data.abilities.int.value)
+            return order * (a.data.abilities.int.value - b.data.abilities.int.value);
           });
           break;
         case 'edu':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.edu.value - b.data.abilities.edu.value)
+            return order * (a.data.abilities.edu.value - b.data.abilities.edu.value);
           });
           break;
         case 'san':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.sanCurrent - b.data.abilities.sanCurrent)
+            return order * (a.data.abilities.sanCurrent - b.data.abilities.sanCurrent);
+          });
+          break;
+        case 'db':
+          charasheet.sort((a, b) => {
+            const a_db = a.data.abilities.str.value + a.data.abilities.siz.value;
+            const b_db = b.data.abilities.str.value + b.data.abilities.siz.value;
+            return order * (a_db - b_db);
           });
           break;
         case 'memo':
           charasheet.sort((a, b) => {
-            return order * (a.data.memo.length - b.data.memo.length)
+            return order * (a.data.memo.length - b.data.memo.length);
           });
           break;
         case 'age':
           charasheet.sort((a, b) => {
             if (isNaN(parseInt(a.data.profile.age))) return 1;
             else if (isNaN(parseInt(b.data.profile.age))) return -1;
-            return order * (parseInt(a.data.profile.age) - parseInt(b.data.profile.age))
+            return order * (parseInt(a.data.profile.age) - parseInt(b.data.profile.age));
           });
           break;
         case 'height':
           charasheet.sort((a, b) => {
             if (isNaN(parseInt(a.data.profile.height))) return 1;
             else if (isNaN(parseInt(b.data.profile.height))) return -1;
-            return order * (parseInt(a.data.profile.height) - parseInt(b.data.profile.height))
+            return order * (parseInt(a.data.profile.height) - parseInt(b.data.profile.height));
           });
           break;
         case 'skill':
@@ -549,18 +710,27 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           break;
       }
     });
-    for (let i = 0; i < charasheet.length; i++) {
-      charalist.push(<details key={charasheet[i].id}>
-        <summary>{i + 1} {charasheet[i].data.profile.name}</summary>
-        <div>
-          タグ: {charasheet[i].data.profile.tag}<br />
-          {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition==="skill"?`(${mode.sortBy[0].subCondition})`:""}:{getCompareNum(charasheet[i], mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
-          <div className='charasheet-link'>
-            <a target="_blank" href={`https://iachara.com/view/${charasheet[i].id}`} rel="noopener noreferrer">いあきゃらで閲覧</a>
+    charasheet.forEach(function (chara) {
+      let is_passed = true;
+      mode.filterBy.forEach(function (filt) {
+        if (!isPassFilt(chara, filt)) {
+          is_passed = false;
+        }
+      });
+      if (is_passed) {
+        charalist.push(<details key={chara.id}>
+          <summary>{chara_index} {chara.data.profile.name}</summary>
+          <div>
+            タグ: {chara.data.profile.tag}<br />
+            {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
+            <div className='charasheet-link'>
+              <a target="_blank" href={`https://iachara.com/view/${chara.id}`} rel="noopener noreferrer">いあきゃらで閲覧</a>
+            </div>
           </div>
-        </div>
-      </details>);
-    }
+        </details>);
+        chara_index++;
+      }
+    });
     return charalist;
   }, [charasheet, mode]);
 

@@ -49,3 +49,20 @@ details[open] summary::before {
 .charasheet-link {
   text-align: right;
 }
+
+.can-click-span {
+  cursor: pointer;
+  transition: all 0.2s 0s ease;
+}
+
+.can-click-span:hover {
+  color: red;
+}
+
+.noUi-tooltip {
+  display: none !important;
+}
+
+.noUi-active .noUi-tooltip {
+  display: block !important;
+}
