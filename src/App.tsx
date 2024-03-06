@@ -318,24 +318,30 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
   }
   calcStatistics();
 
+  function numberWithPlus(n: number): string {
+    if (n > 0) {
+      return "+" + Math.round(n * 100)/100;
+    } else {
+      return (Math.round(n * 100)/100).toString();
+    }
+  }
+
   return (
     <div className='outline'>
       <div id="statistics">
-        全キャラシ数:{charasheet.length}<br />
+        全キャラシ数:{charasheet.length} (かっこ内の数値は期待値との差分です)<br />
         <p>
-          平均STR:{Math.round(statistics_average.str * 100) / 100}(平均:10.5)<br />
-          平均CON:{Math.round(statistics_average.con * 100) / 100}(平均:10.5)<br />
-          平均POW:{Math.round(statistics_average.pow * 100) / 100}(平均:10.5)<br />
-          平均DEX:{Math.round(statistics_average.dex * 100) / 100}(平均:10.5)<br />
-          平均APP:{Math.round(statistics_average.app * 100) / 100}(平均:10.5)<br />
-          平均SIZ:{Math.round(statistics_average.siz * 100) / 100}(平均:13.0)<br />
-          平均INT:{Math.round(statistics_average.int * 100) / 100}(平均:13.0)<br />
-          平均EDU:{Math.round(statistics_average.edu * 100) / 100}(平均:13.5)<br />
+          平均STR:{Math.round(statistics_average.str * 100) / 100} ({numberWithPlus(statistics_average.str-10.5)})<br />
+          平均CON:{Math.round(statistics_average.con * 100) / 100} ({numberWithPlus(statistics_average.con-10.5)})<br />
+          平均POW:{Math.round(statistics_average.pow * 100) / 100} ({numberWithPlus(statistics_average.pow-10.5)})<br />
+          平均DEX:{Math.round(statistics_average.dex * 100) / 100} ({numberWithPlus(statistics_average.dex-10.5)})<br />
+          平均APP:{Math.round(statistics_average.app * 100) / 100} ({numberWithPlus(statistics_average.app-10.5)})<br />
+          平均SIZ:{Math.round(statistics_average.siz * 100) / 100} ({numberWithPlus(statistics_average.siz-13.0)})<br />
+          平均INT:{Math.round(statistics_average.int * 100) / 100} ({numberWithPlus(statistics_average.int-13.0)})<br />
+          平均EDU:{Math.round(statistics_average.edu * 100) / 100} ({numberWithPlus(statistics_average.edu-13.5)})<br />
           (<span title={"無視したキャラシ\n\n" + ignore_list.abilities.join("\n")}>有効キャラシ数:{statistics_average.validNumber}</span>)<br />
+          <br />
           平均メモ欄文字数:{Math.round(statistics_average.additional.memoLength * 100) / 100}<br />
-        </p>
-        これより下の統計はキャラシに書かれた単位が合っていない場合おかしな結果が表示される場合があります<br />
-        <p>
           平均年齢:{Math.round(statistics_average.additional.age.average * 100) / 100}歳(<span title={"無視したキャラシ\n\n" + ignore_list.age.join("\n")}>有効キャラシ数:{statistics_average.additional.age.validNumber}</span>)<br />
           平均身長:{Math.round(statistics_average.additional.height.average * 100) / 100}cm(<span title={"無視したキャラシ\n\n" + ignore_list.height.join("\n")}>有効キャラシ数:{statistics_average.additional.height.validNumber}</span>)<br />
           性別割合:<span title={ignore_list.male.join("\n")}>男性 {Math.round(statistics_average.additional.sex.maleRate * 1000) / 10}%</span>/<span title={ignore_list.female.join("\n")}>女性 {Math.round(statistics_average.additional.sex.femaleRate * 1000) / 10}%</span>/<span title={ignore_list.other.join("\n")}>不明 {Math.round(statistics_average.additional.sex.otherRate * 1000) / 10}%</span><br />
@@ -777,10 +783,10 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         }
       });
       if (is_passed) {
-        if (chara_index <= 5) sns_sentence += `${(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank+"位")} ${chara.data.profile.name} (${chara.data.profile.tag}): ${getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}%0a`
+        if (chara_index <= 5) sns_sentence += `${(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} ${chara.data.profile.name} (${chara.data.profile.tag}): ${getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}%0a`
         charalist.push(
           <details key={chara.id}>
-            <summary>{(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank+"位")} {chara.data.profile.name}</summary>
+            <summary>{(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} {chara.data.profile.name}</summary>
             <div>
               タグ: {chara.data.profile.tag}<br />
               {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
