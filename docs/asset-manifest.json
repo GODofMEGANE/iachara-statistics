@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/iachara-statistics/static/css/main.ca347f1d.css",
-    "main.js": "/iachara-statistics/static/js/main.28facbb7.js",
+    "main.js": "/iachara-statistics/static/js/main.f128a2aa.js",
     "static/js/453.cd6e755c.chunk.js": "/iachara-statistics/static/js/453.cd6e755c.chunk.js",
     "index.html": "/iachara-statistics/index.html",
     "main.ca347f1d.css.map": "/iachara-statistics/static/css/main.ca347f1d.css.map",
-    "main.28facbb7.js.map": "/iachara-statistics/static/js/main.28facbb7.js.map",
+    "main.f128a2aa.js.map": "/iachara-statistics/static/js/main.f128a2aa.js.map",
     "453.cd6e755c.chunk.js.map": "/iachara-statistics/static/js/453.cd6e755c.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.ca347f1d.css",
-    "static/js/main.28facbb7.js"
+    "static/js/main.f128a2aa.js"
   ]
 }

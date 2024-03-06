@@ -3,6 +3,7 @@ import './css/App.css';
 import { JsxElement, setTextRange } from 'typescript';
 import Select from 'react-select';
 import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
+import { FaXTwitter } from "react-icons/fa6";
 import Nouislider, { Formatter } from "nouislider-react";
 import "nouislider/distribute/nouislider.css";
 
@@ -195,7 +196,7 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
       }} />
       {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) : auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) : auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) : (<span></span>)}
       <br />
-      ネットリテラシーのある方はこちらに
+      パスワードを入れたくない方はこちらに
       <input type='text' id='raw_json' className='input' style={{ width: "20rem" }} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => {
         if (e.key === "Enter") try {
           setCharasheet(JSON.parse(raw_json));
@@ -219,7 +220,7 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
     sortBy: [{
       priority: 1,
       condition: "create",
-      subCondition: null,
+      subCondition: "回避",
       order: 'ascend',
     }], filterBy: []
   });
@@ -255,15 +256,15 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
   let ignore_list: { abilities: string[], age: string[], height: string[], male: string[], female: string[], other: string[] } = { abilities: [], age: [], height: [], male: [], female: [], other: [] };
   function calcStatistics() {
     for (let i = 0; i < charasheet.length; i++) {
-      if (charasheet[i].data.abilities.str.value > 0 && charasheet[i].data.abilities.con.value > 0 && charasheet[i].data.abilities.pow.value > 0 && charasheet[i].data.abilities.dex.value > 0 && charasheet[i].data.abilities.app.value > 0 && charasheet[i].data.abilities.siz.value > 0 && charasheet[i].data.abilities.int.value > 0 && charasheet[i].data.abilities.edu.value > 0) {
-        statistics_average.str += charasheet[i].data.abilities.str.value;
-        statistics_average.con += charasheet[i].data.abilities.con.value;
-        statistics_average.pow += charasheet[i].data.abilities.pow.value;
-        statistics_average.dex += charasheet[i].data.abilities.dex.value;
-        statistics_average.app += charasheet[i].data.abilities.app.value;
-        statistics_average.siz += charasheet[i].data.abilities.siz.value;
-        statistics_average.int += charasheet[i].data.abilities.int.value;
-        statistics_average.edu += charasheet[i].data.abilities.edu.value;
+      if (charasheet[i].data.abilities.sanCurrent >= 0) {
+        statistics_average.str += charasheet[i].data.abilities.str.value + charasheet[i].data.abilities.str.fixedDiff + charasheet[i].data.abilities.str.tmpFixedDiff;
+        statistics_average.con += charasheet[i].data.abilities.con.value + charasheet[i].data.abilities.con.fixedDiff + charasheet[i].data.abilities.con.tmpFixedDiff;
+        statistics_average.pow += charasheet[i].data.abilities.pow.value + charasheet[i].data.abilities.pow.fixedDiff + charasheet[i].data.abilities.pow.tmpFixedDiff;
+        statistics_average.dex += charasheet[i].data.abilities.dex.value + charasheet[i].data.abilities.dex.fixedDiff + charasheet[i].data.abilities.dex.tmpFixedDiff;
+        statistics_average.app += charasheet[i].data.abilities.app.value + charasheet[i].data.abilities.app.fixedDiff + charasheet[i].data.abilities.app.tmpFixedDiff;
+        statistics_average.siz += charasheet[i].data.abilities.siz.value + charasheet[i].data.abilities.siz.fixedDiff + charasheet[i].data.abilities.siz.tmpFixedDiff;
+        statistics_average.int += charasheet[i].data.abilities.int.value + charasheet[i].data.abilities.int.fixedDiff + charasheet[i].data.abilities.int.tmpFixedDiff;
+        statistics_average.edu += charasheet[i].data.abilities.edu.value + charasheet[i].data.abilities.edu.fixedDiff + charasheet[i].data.abilities.edu.tmpFixedDiff;
         statistics_average.validNumber++;
       }
       else {
@@ -342,18 +343,18 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
       </div>
       <hr />
       <div id="sort-filter">
-        <Select options={sort_options} isSearchable={true} onChange={(selected) => {
+        <Select options={sort_options} defaultValue={{ value: filt_mode.sortBy[0].condition, label: sort_options.find((option) => option.value === filt_mode.sortBy[0].condition)?.label }} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.sortBy[0].condition = selected!.value;
           setFiltMode(new_mode);
         }} />
-        {filt_mode.sortBy[0].condition === "skill" ? <Select options={skill_list} isSearchable={true} onChange={(selected) => {
+        {filt_mode.sortBy[0].condition === "skill" ? <Select options={skill_list} defaultValue={{ value: filt_mode.sortBy[0].subCondition, label: filt_mode.sortBy[0].subCondition }} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.sortBy[0].subCondition = selected!.value;
           setFiltMode(new_mode);
-        }} /> : <></>}
+        }} isOptionDisabled={(option) => option.value === ""} /> : <></>}
         を使って
-        <Select options={sort_order} isSearchable={true} onChange={(selected) => {
+        <Select options={sort_order} defaultValue={{ value: filt_mode.sortBy[0].order, label: sort_order.find((option) => option.value === filt_mode.sortBy[0].order)?.label }} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.sortBy[0].order = selected!.value;
           setFiltMode(new_mode);
@@ -366,7 +367,7 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
           let new_mode: SortAndFilterMode = { ...filt_mode };
           new_mode.filterBy.push({
             condition: "create",
-            subCondition: null,
+            subCondition: "回避",
             min: 0,
             max: Date.now(),
           });
@@ -387,10 +388,12 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
     let range_max: number =
       (elm.condition === "str" || elm.condition === "con" || elm.condition === "pow" || elm.condition === "dex" || elm.condition === "app" || elm.condition === "siz" || elm.condition === "int") ? 18 :
         (elm.condition === "edu") ? 21 :
-          (elm.condition === "height") ? 200 :
-            (elm.condition === "skill") ? 100 :
-              (elm.condition === "db") ? 5 :
-                (elm.condition === "create" || elm.condition === "update") ? Date.now() : 1;
+          (elm.condition === "height") ? 201 :
+            (elm.condition === "skill" || elm.condition === "san") ? 100 :
+              (elm.condition === "age") ? 101 :
+                (elm.condition === "db") ? 5 :
+                  (elm.condition === "create" || elm.condition === "update") ? Date.now() :
+                    (elm.condition === "memo") ? 10001 : 1;
     let format: any = {
       to: function (value: number) {
         if (elm.condition === "create" || elm.condition === "update") {
@@ -398,30 +401,54 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
         }
         if (elm.condition === "db") {
           const db_list = ["-1d6", "-1d4", "+0", "+1d4", "+1d6", "+1d6以上"];
-          if(value > 5){
+          if (value > 5) {
             value = 5;
           }
           return db_list[value];
+        }
+        if (elm.condition === "memo") {
+          if (value === 10001) {
+            return "10000文字以上";
+          }
+          else {
+            return `${Math.round(value)}文字`;
+          }
+        }
+        if (elm.condition === "age") {
+          if (value === 101) {
+            return "100歳以上";
+          }
+          else {
+            return `${Math.round(value)}歳`;
+          }
+        }
+        if (elm.condition === "height") {
+          if (value === 201) {
+            return "200cm以上";
+          }
+          else {
+            return `${Math.round(value)}cm`;
+          }
         }
         return Math.round(value);
       }
     }
     filt_list.push(
-      <div>
+      <div key={`filt-${index}`}>
         <Select options={sort_options} defaultValue={{ value: elm.condition, label: sort_options.find((option) => option.value === elm.condition)?.label }} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.filterBy[index].condition = selected!.value;
           setFiltMode(new_mode);
         }} />
-        {elm.condition === "skill" ? <Select options={skill_list} isSearchable={true} onChange={(selected) => {
+        {elm.condition === "skill" ? <Select options={skill_list} defaultValue={{ value: elm.subCondition, label: elm.subCondition }} isSearchable={true} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.filterBy[index].subCondition = selected!.value;
           setFiltMode(new_mode);
-        }} /> : <></>}
+        }} isOptionDisabled={(option) => option.value === ""} /> : <></>}
         <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : 0), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[format, format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
           let new_mode = { ...filt_mode };
-          filt_mode.filterBy[index].min = Number(values[0]);
-          filt_mode.filterBy[index].max = Number(values[1]);
+          filt_mode.filterBy[index].min = Math.round(values[0]);
+          filt_mode.filterBy[index].max = Math.round(values[1]);
           setFiltMode(new_mode);
         }} connect />
         <span className='can-click-span' onClick={() => {
@@ -453,7 +480,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     chara.data.battleSkills.static.forEach(function (elm) {
       if (elm.name === skillname) {
         if (skillname === "回避") {
-          answer = (chara.data.abilities.dex.value * 2 + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
+          answer = ((chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff) * 2 + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
         }
         else answer = (elm.defaultPoint + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
       }
@@ -471,7 +498,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     chara.data.negotiationSkills.static.forEach(function (elm) {
       if (elm.name === skillname) {
         if (skillname === "母国語") {
-          answer = (chara.data.abilities.edu.value * 5 + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
+          answer = ((chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff) * 5 + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
         }
         else answer = (elm.defaultPoint + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
       }
@@ -486,36 +513,36 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
       case 'update':
         return (Date.parse(chara.createdAt) >= filt.min && Date.parse(chara.createdAt) <= filt.max);
       case 'str':
-        return (chara.data.abilities.str.value >= filt.min && chara.data.abilities.str.value <= filt.max);
+        return ((chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) >= filt.min && (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) <= filt.max);
       case 'con':
-        return (chara.data.abilities.con.value >= filt.min && chara.data.abilities.con.value <= filt.max);
+        return ((chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff) >= filt.min && (chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff) <= filt.max);
       case 'pow':
-        return (chara.data.abilities.pow.value >= filt.min && chara.data.abilities.pow.value <= filt.max);
+        return ((chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff) >= filt.min && (chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff) <= filt.max);
       case 'dex':
-        return (chara.data.abilities.dex.value >= filt.min && chara.data.abilities.dex.value <= filt.max);
+        return ((chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff) >= filt.min && (chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff) <= filt.max);
       case 'app':
-        return (chara.data.abilities.app.value >= filt.min && chara.data.abilities.app.value <= filt.max);
+        return ((chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff) >= filt.min && (chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff) <= filt.max);
       case 'siz':
-        return (chara.data.abilities.siz.value >= filt.min && chara.data.abilities.siz.value <= filt.max);
+        return ((chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) >= filt.min && (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) <= filt.max);
       case 'int':
-        return (chara.data.abilities.int.value >= filt.min && chara.data.abilities.int.value <= filt.max);
+        return ((chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff) >= filt.min && (chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff) <= filt.max);
       case 'edu':
-        return (chara.data.abilities.edu.value >= filt.min && chara.data.abilities.edu.value <= filt.max);
+        return ((chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff) >= filt.min && (chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff) <= filt.max);
       case 'san':
         return (chara.data.abilities.sanCurrent >= filt.min && chara.data.abilities.sanCurrent <= filt.max);
       case 'db':
         const db_list = [[2, 12], [13, 16], [17, 24], [25, 32], [33, 40], [41, Infinity]];
-        if(filt.min > 5) filt.min = 5;
-        if(filt.max > 5) filt.max = 5;
-        return (chara.data.abilities.str.value + chara.data.abilities.siz.value >= db_list[filt.min][0] && chara.data.abilities.str.value + chara.data.abilities.siz.value <= db_list[filt.max][1]);
+        if (filt.min > 5) filt.min = 5;
+        if (filt.max > 5) filt.max = 5;
+        return ((chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) + (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) >= db_list[filt.min][0] && (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) + (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) <= db_list[filt.max][1]);
       case 'memo':
-        return (chara.data.memo.length >= filt.min && chara.data.memo.length <= filt.max)
+        return (chara.data.memo.length >= filt.min && (chara.data.memo.length <= filt.max || filt.max === 10001))
       case 'age':
         if (isNaN(parseInt(chara.data.profile.age))) return false;
-        return (parseInt(chara.data.profile.age) >= filt.min && parseInt(chara.data.profile.age) <= filt.max);
+        return (parseInt(chara.data.profile.age) >= filt.min && (parseInt(chara.data.profile.age) <= filt.max || filt.max === 101));
       case 'height':
         if (isNaN(parseInt(chara.data.profile.height))) return false;
-        return (parseInt(chara.data.profile.height) >= filt.min && parseInt(chara.data.profile.height) <= filt.max);
+        return (parseInt(chara.data.profile.height) >= filt.min && (parseInt(chara.data.profile.height) <= filt.max || filt.max === 201));
       case 'skill':
         if (filt.subCondition === null || filt.subCondition === undefined) {
           return true;
@@ -534,25 +561,55 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
       case 'update':
         return new Date(chara.updatedAt).toLocaleString("ja-JP");
       case 'str':
-        return chara.data.abilities.str.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff).toString();
       case 'con':
-        return chara.data.abilities.con.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff).toString();
       case 'pow':
-        return chara.data.abilities.pow.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff).toString();
       case 'dex':
-        return chara.data.abilities.dex.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff).toString();
       case 'app':
-        return chara.data.abilities.app.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff).toString();
       case 'siz':
-        return chara.data.abilities.siz.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff).toString();
       case 'int':
-        return chara.data.abilities.int.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff).toString();
       case 'edu':
-        return chara.data.abilities.edu.value.toString();
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        return (chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff).toString();
       case 'san':
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
         return chara.data.abilities.sanCurrent.toString();
       case 'db':
-        let strsiz = chara.data.abilities.str.value + chara.data.abilities.siz.value;
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
+        let strsiz = (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) + (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff);
         let result = "不明";
         if ((2 <= strsiz) && (strsiz <= 12)) {
           result = "-1D6";
@@ -572,29 +629,30 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         else if ((41 <= strsiz) && (strsiz <= 56)) {
           result = "+2D6";
         }
-        else{
-          result = `+${Math.floor((strsiz-57)/16)+3}D6`;
+        else {
+          result = `+${Math.floor((strsiz - 57) / 16) + 3}D6`;
         }
         return result;
       case 'memo':
-        return chara.data.memo.length.toString();
+        return chara.data.memo.length.toString() + "文字";
       case 'age':
         if (isNaN(parseInt(chara.data.profile.age))) return "不明";
-        return chara.data.profile.age;
+        return parseInt(chara.data.profile.age) + "歳";
       case 'height':
         if (isNaN(parseInt(chara.data.profile.height))) return "不明";
-        return chara.data.profile.height;
+        return parseInt(chara.data.profile.height) + "cm";
       case 'skill':
-        if (subCondition === null || subCondition === undefined) {
+        if (chara.data.abilities.sanCurrent === -1 || subCondition === null || subCondition === undefined) {
           return "不明";
         }
-        return getSkillSum(chara, subCondition).toString();
+        return getSkillSum(chara, subCondition).toString() + "%";
       default:
         return "不明";
     }
   }
 
   const sortAndFiltered = useMemo<ReactElement[]>(function (): ReactElement[] {
+    let chara_rank = 1;
     let chara_index = 1;
     const charalist: ReactElement[] = [];
     mode.sortBy.sort((a, b) => {
@@ -613,56 +671,56 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.str.value - b.data.abilities.str.value);
+            return order * ((a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) - (b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff));
           });
           break;
         case 'con':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.con.value - b.data.abilities.con.value);
+            return order * ((a.data.abilities.con.value + a.data.abilities.con.fixedDiff + a.data.abilities.con.tmpFixedDiff) - (b.data.abilities.con.value + b.data.abilities.con.fixedDiff + b.data.abilities.con.tmpFixedDiff));
           });
           break;
         case 'pow':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.pow.value - b.data.abilities.pow.value);
+            return order * ((a.data.abilities.pow.value + a.data.abilities.pow.fixedDiff + a.data.abilities.pow.tmpFixedDiff) - (b.data.abilities.pow.value + b.data.abilities.pow.fixedDiff + b.data.abilities.pow.tmpFixedDiff));
           });
           break;
         case 'dex':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.dex.value - b.data.abilities.dex.value);
+            return order * ((a.data.abilities.dex.value + a.data.abilities.dex.fixedDiff + a.data.abilities.dex.tmpFixedDiff) - (b.data.abilities.dex.value + b.data.abilities.dex.fixedDiff + b.data.abilities.dex.tmpFixedDiff));
           });
           break;
         case 'app':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.app.value - b.data.abilities.app.value);
+            return order * ((a.data.abilities.app.value + a.data.abilities.app.fixedDiff + a.data.abilities.app.tmpFixedDiff) - (b.data.abilities.app.value + b.data.abilities.app.fixedDiff + b.data.abilities.app.tmpFixedDiff));
           });
           break;
         case 'siz':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.siz.value - b.data.abilities.siz.value);
+            return order * ((a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff) - (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff));
           });
           break;
         case 'int':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.int.value - b.data.abilities.int.value);
+            return order * ((a.data.abilities.int.value + a.data.abilities.int.fixedDiff + a.data.abilities.int.tmpFixedDiff) - (b.data.abilities.int.value + b.data.abilities.int.fixedDiff + b.data.abilities.int.tmpFixedDiff));
           });
           break;
         case 'edu':
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * (a.data.abilities.edu.value - b.data.abilities.edu.value);
+            return order * ((a.data.abilities.edu.value + a.data.abilities.edu.fixedDiff + a.data.abilities.edu.tmpFixedDiff) - (b.data.abilities.edu.value + b.data.abilities.edu.fixedDiff + b.data.abilities.edu.tmpFixedDiff));
           });
           break;
         case 'san':
@@ -674,8 +732,8 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           break;
         case 'db':
           charasheet.sort((a, b) => {
-            const a_db = a.data.abilities.str.value + a.data.abilities.siz.value;
-            const b_db = b.data.abilities.str.value + b.data.abilities.siz.value;
+            const a_db = (a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) + (a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff);
+            const b_db = (b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff) + (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff);
             return order * (a_db - b_db);
           });
           break;
@@ -710,7 +768,8 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           break;
       }
     });
-    charasheet.forEach(function (chara) {
+    let sns_sentence = `私の自探索者${sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}${mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}ランキングは...%0a%0a`;
+    charasheet.forEach(function (chara, index) {
       let is_passed = true;
       mode.filterBy.forEach(function (filt) {
         if (!isPassFilt(chara, filt)) {
@@ -718,22 +777,32 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         }
       });
       if (is_passed) {
-        charalist.push(<details key={chara.id}>
-          <summary>{chara_index} {chara.data.profile.name}</summary>
-          <div>
-            タグ: {chara.data.profile.tag}<br />
-            {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
-            <div className='charasheet-link'>
-              <a target="_blank" href={`https://iachara.com/view/${chara.id}`} rel="noopener noreferrer">いあきゃらで閲覧</a>
+        if (chara_index <= 5) sns_sentence += `${(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank+"位")} ${chara.data.profile.name} (${chara.data.profile.tag}): ${getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}%0a`
+        charalist.push(
+          <details key={chara.id}>
+            <summary>{(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank+"位")} {chara.data.profile.name}</summary>
+            <div>
+              タグ: {chara.data.profile.tag}<br />
+              {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
+              <div className='charasheet-link'>
+                <a target="_blank" href={`https://iachara.com/view/${chara.id}`} rel="noopener noreferrer">いあきゃらで閲覧</a>
+              </div>
             </div>
-          </div>
-        </details>);
+          </details>
+        );
+        if (index < charasheet.length - 1 && getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) !== getCompareNum(charasheet[index + 1], mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))) {
+          chara_rank++;
+        }
         chara_index++;
       }
     });
+    charalist.unshift((
+      <a key="share" href={`http://twitter.com/share?url=https://www.godofmegane.com/iachara-statistics/&text=${sns_sentence}`} target="_blank" rel="noopener noreferrer">
+        ランキングを投稿<FaXTwitter />
+      </a>
+    ));
     return charalist;
   }, [charasheet, mode]);
-
 
   return (
     <div>
