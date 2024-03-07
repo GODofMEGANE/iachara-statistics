@@ -1,9 +1,9 @@
-import React, { ReactPropTypes, useState, useMemo, ReactElement } from 'react';
+import React, { useState, useMemo, ReactElement } from 'react';
 import './css/App.css';
-import { JsxElement, setTextRange } from 'typescript';
 import Select from 'react-select';
 import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
-import { FaXTwitter } from "react-icons/fa6";
+import { IoIosInformationCircleOutline } from "react-icons/io";
+import { TwitterShareButton, XIcon, LineShareButton, LineIcon } from 'react-share';
 import Nouislider, { Formatter } from "nouislider-react";
 import "nouislider/distribute/nouislider.css";
 
@@ -27,27 +27,27 @@ const sort_options: { value: string, label: string }[] = [
 ];
 
 const filt_options: { value: string, label: string }[] = [
-    { value: "create", label: "作成日時" },
-    { value: "update", label: "更新日時" },
-    { value: "str", label: "STR" },
-    { value: "con", label: "CON" },
-    { value: "pow", label: "POW" },
-    { value: "dex", label: "DEX" },
-    { value: "app", label: "APP" },
-    { value: "siz", label: "SIZ" },
-    { value: "int", label: "INT" },
-    { value: "edu", label: "EDU" },
-    { value: "san", label: "現在SAN値" },
-    { value: "db", label: "ダメージボーナス" },
-    { value: "memo", label: "メモ欄文字数" },
-    { value: "age", label: "年齢" },
-    { value: "height", label: "身長" },
-    { value: "skill", label: "技能値" },
-    { value: "notlost", label: "ロスト以外" },
-    { value: "lost", label: "ロスト" },
-    { value: "6th", label: "6版"},
-    { value: "7th", label: "7版"},
-  ];
+  { value: "create", label: "作成日時" },
+  { value: "update", label: "更新日時" },
+  { value: "str", label: "STR" },
+  { value: "con", label: "CON" },
+  { value: "pow", label: "POW" },
+  { value: "dex", label: "DEX" },
+  { value: "app", label: "APP" },
+  { value: "siz", label: "SIZ" },
+  { value: "int", label: "INT" },
+  { value: "edu", label: "EDU" },
+  { value: "san", label: "現在SAN値" },
+  { value: "db", label: "ダメージボーナス" },
+  { value: "memo", label: "メモ欄文字数" },
+  { value: "age", label: "年齢" },
+  { value: "height", label: "身長" },
+  { value: "skill", label: "技能値" },
+  { value: "notlost", label: "ロスト以外" },
+  { value: "lost", label: "ロスト" },
+  { value: "6th", label: "6版" },
+  { value: "7th", label: "7版" },
+];
 
 const sort_order: { value: string, label: string }[] = [
   { value: "ascend", label: "昇順(小さい順)" },
@@ -196,44 +196,36 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
     })
   }
 
+  function setCharasheetFromLogin(): void {
+    getCharasheet(login_id, password).then((result) => {
+      console.log(result);
+      setCharasheet(result);
+    })
+  }
+
+  function setCharasheetFromRawjson(): void {
+    try {
+      setCharasheet(JSON.parse(raw_json));
+    } catch (e) {
+      alert("JSONの構文解析に失敗しました");
+    }
+  }
+
   return (
     <div className='outline'>
       ここにいあきゃらのIDとパスワードを入力
-      <input type='text' id='login_id' className='input' value={login_id} onChange={(evt) => { setLoginId(evt.target.value) }} placeholder='ユーザーID' onKeyDown={(e) => {
-        if (e.key === "Enter") getCharasheet(login_id, password).then((result) => {
-          console.log(result);
-          setCharasheet(result);
-        })
-      }} />
-      <input type='password' id='password' className='input' value={password} onChange={(evt) => { setPassword(evt.target.value) }} placeholder='パスワード' onKeyDown={(e) => {
-        if (e.key === "Enter") getCharasheet(login_id, password).then((result) => {
-          console.log(result);
-          setCharasheet(result);
-        })
-      }} />
-      <input type='button' id='submit' value="決定" onClick={() => {
-        getCharasheet(login_id, password).then((result) => {
-          console.log(result);
-          setCharasheet(result);
-        })
-      }} />
-      {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) : auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) : auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) : (<span></span>)}
+      <input type='text' id='login_id' className='input' value={login_id} onChange={(evt) => { setLoginId(evt.target.value) }} placeholder='ユーザーID' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromLogin(); }} />
+      <input type='password' id='password' className='input' value={password} onChange={(evt) => { setPassword(evt.target.value) }} placeholder='パスワード' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromLogin(); }} />
+      <input type='button' id='submit' value="決定" onClick={setCharasheetFromLogin} />
+      {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) :
+        auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) :
+          auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) :
+            (<span></span>)}
       <br />
       パスワードを入れたくない方はこちらに
-      <input type='text' id='raw_json' className='input' style={{ width: "20rem" }} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => {
-        if (e.key === "Enter") try {
-          setCharasheet(JSON.parse(raw_json));
-        } catch (e) {
-          alert("JSONの構文解析に失敗しました");
-        }
-      }} />
-      <input type='button' id='submit-rawjson' value="決定" onClick={() => {
-        try {
-          setCharasheet(JSON.parse(raw_json));
-        } catch (e) {
-          alert("JSONの構文解析に失敗しました");
-        }
-      }} title={"1.いあきゃらのマイページを開く\n2.F12を押しNetworkタブを開く\n3.一度ページをリロードする\n4.いっぱい出てくるのでNameがcharasheetのものを探してクリックする\n5.右ウインドウでResponseタブをクリックして全てコピー\n6.左の入力欄にペーストしてこのボタンをクリック"} />
+      <input type='text' id='raw_json' className='input' style={{ width: "20rem" }} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromRawjson(); }} />
+      <input type='button' id='submit-rawjson' value="決定" onClick={setCharasheetFromRawjson} />
+      <IoIosInformationCircleOutline className='centered-icon' title={"1.いあきゃらのマイページを開く\n2.F12を押しNetworkタブを開く\n3.一度ページをリロードする\n4.いっぱい出てくるのでNameがcharasheetのものを探してクリックする\n5.右ウインドウでResponseタブをクリックして全てコピー\n6.左の入力欄にペーストしてこのボタンをクリック"} />
     </div>
   )
 }
@@ -343,9 +335,9 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
 
   function numberWithPlus(n: number): string {
     if (n > 0) {
-      return "+" + Math.round(n * 100)/100;
+      return "+" + Math.round(n * 100) / 100;
     } else {
-      return (Math.round(n * 100)/100).toString();
+      return (Math.round(n * 100) / 100).toString();
     }
   }
 
@@ -354,14 +346,14 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
       <div id="statistics">
         全キャラシ数:{charasheet.length} (かっこ内の数値は期待値との差分です)<br />
         <p>
-          平均STR:{Math.round(statistics_average.str * 100) / 100} ({numberWithPlus(statistics_average.str-10.5)})<br />
-          平均CON:{Math.round(statistics_average.con * 100) / 100} ({numberWithPlus(statistics_average.con-10.5)})<br />
-          平均POW:{Math.round(statistics_average.pow * 100) / 100} ({numberWithPlus(statistics_average.pow-10.5)})<br />
-          平均DEX:{Math.round(statistics_average.dex * 100) / 100} ({numberWithPlus(statistics_average.dex-10.5)})<br />
-          平均APP:{Math.round(statistics_average.app * 100) / 100} ({numberWithPlus(statistics_average.app-10.5)})<br />
-          平均SIZ:{Math.round(statistics_average.siz * 100) / 100} ({numberWithPlus(statistics_average.siz-13.0)})<br />
-          平均INT:{Math.round(statistics_average.int * 100) / 100} ({numberWithPlus(statistics_average.int-13.0)})<br />
-          平均EDU:{Math.round(statistics_average.edu * 100) / 100} ({numberWithPlus(statistics_average.edu-13.5)})<br />
+          平均STR:{Math.round(statistics_average.str * 100) / 100} ({numberWithPlus(statistics_average.str - 10.5)})<br />
+          平均CON:{Math.round(statistics_average.con * 100) / 100} ({numberWithPlus(statistics_average.con - 10.5)})<br />
+          平均POW:{Math.round(statistics_average.pow * 100) / 100} ({numberWithPlus(statistics_average.pow - 10.5)})<br />
+          平均DEX:{Math.round(statistics_average.dex * 100) / 100} ({numberWithPlus(statistics_average.dex - 10.5)})<br />
+          平均APP:{Math.round(statistics_average.app * 100) / 100} ({numberWithPlus(statistics_average.app - 10.5)})<br />
+          平均SIZ:{Math.round(statistics_average.siz * 100) / 100} ({numberWithPlus(statistics_average.siz - 13.0)})<br />
+          平均INT:{Math.round(statistics_average.int * 100) / 100} ({numberWithPlus(statistics_average.int - 13.0)})<br />
+          平均EDU:{Math.round(statistics_average.edu * 100) / 100} ({numberWithPlus(statistics_average.edu - 13.5)})<br />
           (<span title={"無視したキャラシ\n\n" + ignore_list.abilities.join("\n")}>有効キャラシ数:{statistics_average.validNumber}</span>)<br />
           <br />
           平均メモ欄文字数:{Math.round(statistics_average.additional.memoLength * 100) / 100}<br />
@@ -402,10 +394,10 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
           });
           setFiltMode(new_mode);
         }}>
-          表示条件を追加<CiCirclePlus size={"1.5rem"} style={{ margin: "0.5rem", verticalAlign: "middle" }} />
+          表示条件を追加<CiCirclePlus className='centered-icon' size={"1.5rem"} />
         </span>
+        <hr />
       </div>
-      <br />
       <CharaList charasheet={charasheet} mode={filt_mode} />
     </div>
   );
@@ -417,49 +409,51 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
     let range_max: number =
       (elm.condition === "str" || elm.condition === "con" || elm.condition === "pow" || elm.condition === "dex" || elm.condition === "app" || elm.condition === "siz" || elm.condition === "int") ? 18 :
         (elm.condition === "edu") ? 21 :
-          (elm.condition === "height") ? 201 :
+          (elm.condition === "height") ? 201 : //0~200cmと200以上
             (elm.condition === "skill" || elm.condition === "san") ? 100 :
-              (elm.condition === "age") ? 101 :
+              (elm.condition === "age") ? 101 : //0~100歳と100歳以上
                 (elm.condition === "db") ? 5 :
                   (elm.condition === "create" || elm.condition === "update") ? Date.now() :
-                    (elm.condition === "memo") ? 10001 : 1;
-    let format: any = {
+                    (elm.condition === "memo") ? 10001 : 1; //0~10000文字と10000文字以上
+    const tooltips_format: Formatter = {
       to: function (value: number) {
-        if (elm.condition === "create" || elm.condition === "update") {
-          return (new Date(value)).toLocaleDateString('ja-JP');
+        switch (elm.condition) {
+          case "create":
+          case "update":
+            return (new Date(value)).toLocaleDateString('ja-JP');
+          case "db":
+            const db_list = ["-1d6", "-1d4", "+0", "+1d4", "+1d6", "+1d6以上"];
+            if (value > 5) {
+              value = 5;
+            }
+            return db_list[value];
+          case "memo":
+            if (value === 10001) {
+              return "10000文字以上";
+            }
+            else {
+              return `${Math.round(value)}文字`;
+            }
+          case "age":
+            if (value === 101) {
+              return "100歳以上";
+            }
+            else {
+              return `${Math.round(value)}歳`;
+            }
+          case "height":
+            if (value === 201) {
+              return "200cm以上";
+            }
+            else {
+              return `${Math.round(value)}cm`;
+            }
+          default:
+            return Math.round(value);
         }
-        if (elm.condition === "db") {
-          const db_list = ["-1d6", "-1d4", "+0", "+1d4", "+1d6", "+1d6以上"];
-          if (value > 5) {
-            value = 5;
-          }
-          return db_list[value];
-        }
-        if (elm.condition === "memo") {
-          if (value === 10001) {
-            return "10000文字以上";
-          }
-          else {
-            return `${Math.round(value)}文字`;
-          }
-        }
-        if (elm.condition === "age") {
-          if (value === 101) {
-            return "100歳以上";
-          }
-          else {
-            return `${Math.round(value)}歳`;
-          }
-        }
-        if (elm.condition === "height") {
-          if (value === 201) {
-            return "200cm以上";
-          }
-          else {
-            return `${Math.round(value)}cm`;
-          }
-        }
-        return Math.round(value);
+      },
+      from: function (value: string | number): number {
+        return Number(value);
       }
     }
     filt_list.push(
@@ -475,18 +469,18 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
           setFiltMode(new_mode);
         }} isOptionDisabled={(option) => option.value === ""} /> : <></>}
         {elm.condition === "notlost" || elm.condition === "lost" || elm.condition === "6th" || elm.condition === "7th" ? <></> :
-        <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : 0), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[format, format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
-          let new_mode = { ...filt_mode };
-          filt_mode.filterBy[index].min = Math.round(values[0]);
-          filt_mode.filterBy[index].max = Math.round(values[1]);
-          setFiltMode(new_mode);
-        }} connect />}
+          <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : 0), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[tooltips_format, tooltips_format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
+            let new_mode = { ...filt_mode };
+            filt_mode.filterBy[index].min = Math.round(values[0]);
+            filt_mode.filterBy[index].max = Math.round(values[1]);
+            setFiltMode(new_mode);
+          }} connect />}
         <span className='can-click-span' onClick={() => {
           let new_mode: SortAndFilterMode = { ...filt_mode };
           new_mode.filterBy.splice(index, 1);
           setFiltMode(new_mode);
         }}>
-          この条件を削除<CiCircleMinus size={"1.5rem"} style={{ margin: "0.5rem", verticalAlign: "middle" }} />
+          この条件を削除<CiCircleMinus className='centered-icon' size={"1.5rem"} />
         </span>
         <hr />
       </div>
@@ -500,7 +494,7 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
 }
 
 function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortAndFilterMode }) {
-  function getSkillSum(chara: CharaSheet, skillname: string): number {
+  function getSkillValue(chara: CharaSheet, skillname: string): number {
     let answer: number = -1;
     chara.data.actionSkills.static.forEach(function (elm) {
       if (elm.name === skillname) {
@@ -536,28 +530,22 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     return answer;
   }
 
-  function isPassFilt(chara: CharaSheet, filt: { condition: string, subCondition: string | null, min: number, max: number }): boolean {
+  function isPassFilt(chara: CharaSheet, filt: { condition: string, subCondition: string, min: number, max: number }): boolean {
     switch (filt.condition) {
       case 'create':
         return (Date.parse(chara.createdAt) >= filt.min && Date.parse(chara.createdAt) <= filt.max);
       case 'update':
         return (Date.parse(chara.createdAt) >= filt.min && Date.parse(chara.createdAt) <= filt.max);
       case 'str':
-        return ((chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) >= filt.min && (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) <= filt.max);
       case 'con':
-        return ((chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff) >= filt.min && (chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff) <= filt.max);
       case 'pow':
-        return ((chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff) >= filt.min && (chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff) <= filt.max);
       case 'dex':
-        return ((chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff) >= filt.min && (chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff) <= filt.max);
       case 'app':
-        return ((chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff) >= filt.min && (chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff) <= filt.max);
       case 'siz':
-        return ((chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) >= filt.min && (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) <= filt.max);
       case 'int':
-        return ((chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff) >= filt.min && (chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff) <= filt.max);
       case 'edu':
-        return ((chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff) >= filt.min && (chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff) <= filt.max);
+        let ability: 'str' | 'con' | 'pow' | 'dex' | 'app' | 'siz' | 'int' | 'edu' = filt.condition;
+        return ((chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) >= filt.min && (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) <= filt.max);
       case 'san':
         return (chara.data.abilities.sanCurrent >= filt.min && chara.data.abilities.sanCurrent <= filt.max);
       case 'db':
@@ -577,7 +565,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         if (filt.subCondition === null || filt.subCondition === undefined) {
           return true;
         }
-        let skillsum = getSkillSum(chara, filt.subCondition);
+        let skillsum = getSkillValue(chara, filt.subCondition);
         return (skillsum >= filt.min && skillsum <= filt.max);
       case 'notlost':
         return !chara.data.profile.isLost;
@@ -592,52 +580,25 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     }
   }
 
-  function getCompareNum(chara: CharaSheet, condition: string, subCondition?: string): string {
+  function getComparedString(chara: CharaSheet, condition: string, subCondition?: string): string {
     switch (condition) {
       case 'create':
-        return new Date(chara.createdAt).toLocaleString("ja-JP");
+        return new Date(chara.createdAt).toLocaleDateString("ja-JP");
       case 'update':
-        return new Date(chara.updatedAt).toLocaleString("ja-JP");
+        return new Date(chara.updatedAt).toLocaleDateString("ja-JP");
       case 'str':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff).toString();
       case 'con':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff).toString();
       case 'pow':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff).toString();
       case 'dex':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff).toString();
       case 'app':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff).toString();
       case 'siz':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff).toString();
       case 'int':
-        if (chara.data.abilities.sanCurrent === -1) {
-          return "不明";
-        }
-        return (chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff).toString();
       case 'edu':
+        let ability: 'str' | 'con' | 'pow' | 'dex' | 'app' | 'siz' | 'int' | 'edu' = condition;
         if (chara.data.abilities.sanCurrent === -1) {
           return "不明";
         }
-        return (chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff).toString();
+        return (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff).toString();
       case 'san':
         if (chara.data.abilities.sanCurrent === -1) {
           return "不明";
@@ -683,7 +644,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         if (chara.data.abilities.sanCurrent === -1 || subCondition === null || subCondition === undefined) {
           return "不明";
         }
-        return getSkillSum(chara, subCondition).toString() + "%";
+        return getSkillValue(chara, subCondition).toString() + "%";
       default:
         return "不明";
     }
@@ -706,59 +667,18 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           charasheet.sort((a, b) => { return order * (Date.parse(a.updatedAt) - Date.parse(b.updatedAt)) });
           break;
         case 'str':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) - (b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff));
-          });
-          break;
         case 'con':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.con.value + a.data.abilities.con.fixedDiff + a.data.abilities.con.tmpFixedDiff) - (b.data.abilities.con.value + b.data.abilities.con.fixedDiff + b.data.abilities.con.tmpFixedDiff));
-          });
-          break;
         case 'pow':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.pow.value + a.data.abilities.pow.fixedDiff + a.data.abilities.pow.tmpFixedDiff) - (b.data.abilities.pow.value + b.data.abilities.pow.fixedDiff + b.data.abilities.pow.tmpFixedDiff));
-          });
-          break;
         case 'dex':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.dex.value + a.data.abilities.dex.fixedDiff + a.data.abilities.dex.tmpFixedDiff) - (b.data.abilities.dex.value + b.data.abilities.dex.fixedDiff + b.data.abilities.dex.tmpFixedDiff));
-          });
-          break;
         case 'app':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.app.value + a.data.abilities.app.fixedDiff + a.data.abilities.app.tmpFixedDiff) - (b.data.abilities.app.value + b.data.abilities.app.fixedDiff + b.data.abilities.app.tmpFixedDiff));
-          });
-          break;
         case 'siz':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff) - (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff));
-          });
-          break;
         case 'int':
-          charasheet.sort((a, b) => {
-            if (a.data.abilities.sanCurrent < 0) return 1;
-            else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.int.value + a.data.abilities.int.fixedDiff + a.data.abilities.int.tmpFixedDiff) - (b.data.abilities.int.value + b.data.abilities.int.fixedDiff + b.data.abilities.int.tmpFixedDiff));
-          });
-          break;
         case 'edu':
+          let ability: 'str' | 'con' | 'pow' | 'dex' | 'app' | 'siz' | 'int' | 'edu' = sortby.condition;
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities.edu.value + a.data.abilities.edu.fixedDiff + a.data.abilities.edu.tmpFixedDiff) - (b.data.abilities.edu.value + b.data.abilities.edu.fixedDiff + b.data.abilities.edu.tmpFixedDiff));
+            return order * ((a.data.abilities[ability].value + a.data.abilities[ability].fixedDiff + a.data.abilities[ability].tmpFixedDiff) - (b.data.abilities[ability].value + b.data.abilities[ability].fixedDiff + b.data.abilities[ability].tmpFixedDiff));
           });
           break;
         case 'san':
@@ -803,12 +723,12 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
             if (sortby.subCondition === null) {
               return 1;
             }
-            return order * (getSkillSum(a, sortby.subCondition) - getSkillSum(b, sortby.subCondition));
+            return order * (getSkillValue(a, sortby.subCondition) - getSkillValue(b, sortby.subCondition));
           });
           break;
       }
     });
-    let sns_sentence = `私の自探索者${sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}${mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}ランキングは...%0a%0a`;
+    let sns_sentence = `私の自探索者${sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}${mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}ランキングは…\n\n`;
     charasheet.forEach(function (chara, index) {
       let is_passed = true;
       mode.filterBy.forEach(function (filt) {
@@ -817,31 +737,37 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         }
       });
       if (is_passed) {
-        if (chara_index <= 5) sns_sentence += `${(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} ${chara.data.profile.name} (${chara.data.profile.tag}): ${getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}%0a`
+        if (chara_index <= 5) sns_sentence += `${(getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} ${chara.data.profile.name} (${chara.data.profile.tag}): ${getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}\n`
         charalist.push(
           <details key={chara.id}>
-            <summary>{(getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} {chara.data.profile.name}</summary>
+            <summary>{(getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} {chara.data.profile.name}</summary>
             <div>
               タグ: {chara.data.profile.tag}<br />
-              {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
+              {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
               <div className='charasheet-link'>
                 <a target="_blank" href={`https://iachara.com/view/${chara.id}`} rel="noopener noreferrer">いあきゃらで閲覧</a>
               </div>
             </div>
           </details>
         );
-        if (index < charasheet.length - 1 && getCompareNum(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) !== getCompareNum(charasheet[index + 1], mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))) {
-          chara_rank++;
-        }
         chara_index++;
+        if (index < charasheet.length - 1 && getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) !== getComparedString(charasheet[index + 1], mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))) {
+          chara_rank = chara_index;
+        }
       }
     });
     charalist.unshift((
-      <a key="share" href={`http://twitter.com/share?url=https://www.godofmegane.com/iachara-statistics/&text=${sns_sentence}`} target="_blank" rel="noopener noreferrer">
-        ランキングを投稿<FaXTwitter />
-      </a>
+      <div >
+        <TwitterShareButton url='https://www.godofmegane.com/iachara-statistics/' title={sns_sentence} htmlTitle='自探索者ランキングを投稿'>
+          <XIcon size={24} round />
+        </TwitterShareButton>
+        <LineShareButton url='https://www.godofmegane.com/iachara-statistics/' title={sns_sentence} htmlTitle='自探索者ランキングを投稿' style={{marginLeft: "0.5rem"}}>
+          <LineIcon size={24} round />
+        </LineShareButton>
+      </div>
     ));
     return charalist;
+    // eslint-disable-next-line
   }, [charasheet, mode]);
 
   return (

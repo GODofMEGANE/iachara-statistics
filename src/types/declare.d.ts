@@ -326,12 +326,12 @@ type SortAndFilterMode = {
     sortBy: {
         priority: number,
         condition: string,
-        subCondition: string | null,
+        subCondition: string,
         order: string,
     }[],
     filterBy: {
         condition: string,
-        subCondition: string | null,
+        subCondition: string,
         min: number,
         max: number,
     }[]

@@ -55,6 +55,11 @@ details[open] summary::before {
   transition: all 0.2s 0s ease;
 }
 
+.centered-icon {
+  margin: 0.5rem;
+  vertical-align: middle;
+}
+
 .can-click-span:hover {
   color: red;
 }
