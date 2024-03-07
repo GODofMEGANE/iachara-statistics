@@ -26,6 +26,29 @@ const sort_options: { value: string, label: string }[] = [
   { value: "skill", label: "技能値" },
 ];
 
+const filt_options: { value: string, label: string }[] = [
+    { value: "create", label: "作成日時" },
+    { value: "update", label: "更新日時" },
+    { value: "str", label: "STR" },
+    { value: "con", label: "CON" },
+    { value: "pow", label: "POW" },
+    { value: "dex", label: "DEX" },
+    { value: "app", label: "APP" },
+    { value: "siz", label: "SIZ" },
+    { value: "int", label: "INT" },
+    { value: "edu", label: "EDU" },
+    { value: "san", label: "現在SAN値" },
+    { value: "db", label: "ダメージボーナス" },
+    { value: "memo", label: "メモ欄文字数" },
+    { value: "age", label: "年齢" },
+    { value: "height", label: "身長" },
+    { value: "skill", label: "技能値" },
+    { value: "notlost", label: "ロスト以外" },
+    { value: "lost", label: "ロスト" },
+    { value: "6th", label: "6版"},
+    { value: "7th", label: "7版"},
+  ];
+
 const sort_order: { value: string, label: string }[] = [
   { value: "ascend", label: "昇順(小さい順)" },
   { value: "descend", label: "降順(大きい順)" },
@@ -441,7 +464,7 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
     }
     filt_list.push(
       <div key={`filt-${index}`}>
-        <Select options={sort_options} defaultValue={{ value: elm.condition, label: sort_options.find((option) => option.value === elm.condition)?.label }} onChange={(selected) => {
+        <Select options={filt_options} defaultValue={{ value: elm.condition, label: filt_options.find((option) => option.value === elm.condition)?.label }} onChange={(selected) => {
           let new_mode = { ...filt_mode };
           filt_mode.filterBy[index].condition = selected!.value;
           setFiltMode(new_mode);
@@ -451,12 +474,13 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
           filt_mode.filterBy[index].subCondition = selected!.value;
           setFiltMode(new_mode);
         }} isOptionDisabled={(option) => option.value === ""} /> : <></>}
+        {elm.condition === "notlost" || elm.condition === "lost" || elm.condition === "6th" || elm.condition === "7th" ? <></> :
         <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : 0), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[format, format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
           let new_mode = { ...filt_mode };
           filt_mode.filterBy[index].min = Math.round(values[0]);
           filt_mode.filterBy[index].max = Math.round(values[1]);
           setFiltMode(new_mode);
-        }} connect />
+        }} connect />}
         <span className='can-click-span' onClick={() => {
           let new_mode: SortAndFilterMode = { ...filt_mode };
           new_mode.filterBy.splice(index, 1);
@@ -478,7 +502,7 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
 function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortAndFilterMode }) {
   function getSkillSum(chara: CharaSheet, skillname: string): number {
     let answer: number = -1;
-    chara.data.actionSkills.static.forEach(function (elm, index) {
+    chara.data.actionSkills.static.forEach(function (elm) {
       if (elm.name === skillname) {
         answer = (elm.defaultPoint + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
       }
@@ -555,6 +579,14 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         }
         let skillsum = getSkillSum(chara, filt.subCondition);
         return (skillsum >= filt.min && skillsum <= filt.max);
+      case 'notlost':
+        return !chara.data.profile.isLost;
+      case 'lost':
+        return chara.data.profile.isLost;
+      case '6th':
+        return (chara.data.version === "6th");
+      case '7th':
+        return (chara.data.version === "7th");
       default:
         return true;
     }
