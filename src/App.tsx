@@ -18,6 +18,7 @@ const sort_options: { value: string, label: string }[] = [
   { value: "siz", label: "SIZ" },
   { value: "int", label: "INT" },
   { value: "edu", label: "EDU" },
+  { value: "total", label: "全ステータス合計値" },
   { value: "san", label: "現在SAN値" },
   { value: "db", label: "ダメージボーナス" },
   { value: "memo", label: "メモ欄文字数" },
@@ -37,6 +38,7 @@ const filt_options: { value: string, label: string }[] = [
   { value: "siz", label: "SIZ" },
   { value: "int", label: "INT" },
   { value: "edu", label: "EDU" },
+  { value: "total", label: "全ステータス合計値" },
   { value: "san", label: "現在SAN値" },
   { value: "db", label: "ダメージボーナス" },
   { value: "memo", label: "メモ欄文字数" },
@@ -409,6 +411,7 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
     let range_max: number =
       (elm.condition === "str" || elm.condition === "con" || elm.condition === "pow" || elm.condition === "dex" || elm.condition === "app" || elm.condition === "siz" || elm.condition === "int") ? 18 :
         (elm.condition === "edu") ? 21 :
+        (elm.condition === "total") ? 147 :
           (elm.condition === "height") ? 201 : //0~200cmと200以上
             (elm.condition === "skill" || elm.condition === "san") ? 100 :
               (elm.condition === "age") ? 101 : //0~100歳と100歳以上
@@ -469,7 +472,7 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
           setFiltMode(new_mode);
         }} isOptionDisabled={(option) => option.value === ""} /> : <></>}
         {elm.condition === "notlost" || elm.condition === "lost" || elm.condition === "6th" || elm.condition === "7th" ? <></> :
-          <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : 0), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[tooltips_format, tooltips_format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
+          <Nouislider range={{ min: ((elm.condition === "create" || elm.condition === "update") ? 1577836800000 : (elm.condition === "total" ? 37 : 0)), max: range_max }} start={[elm.min, elm.max]} step={1} tooltips={[tooltips_format, tooltips_format]} style={{ margin: "1rem 5% 1rem 5%", zIndex: 0 }} onChange={(values) => {
             let new_mode = { ...filt_mode };
             filt_mode.filterBy[index].min = Math.round(values[0]);
             filt_mode.filterBy[index].max = Math.round(values[1]);
@@ -546,6 +549,17 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
       case 'edu':
         let ability: 'str' | 'con' | 'pow' | 'dex' | 'app' | 'siz' | 'int' | 'edu' = filt.condition;
         return ((chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) >= filt.min && (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) <= filt.max);
+      case 'total':
+        let sum = 0;
+        sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
+        sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
+        sum += chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff;
+        sum += chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff;
+        sum += chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff;
+        sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
+        sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
+        sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
+        return ((sum >= filt.min)&&(sum <= filt.max));
       case 'san':
         return (chara.data.abilities.sanCurrent >= filt.min && chara.data.abilities.sanCurrent <= filt.max);
       case 'db':
@@ -599,6 +613,17 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           return "不明";
         }
         return (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff).toString();
+      case 'total':
+        let sum = 0;
+        sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
+        sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
+        sum += chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff;
+        sum += chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff;
+        sum += chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff;
+        sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
+        sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
+        sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
+        return sum.toString();
       case 'san':
         if (chara.data.abilities.sanCurrent === -1) {
           return "不明";
@@ -679,6 +704,26 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
             return order * ((a.data.abilities[ability].value + a.data.abilities[ability].fixedDiff + a.data.abilities[ability].tmpFixedDiff) - (b.data.abilities[ability].value + b.data.abilities[ability].fixedDiff + b.data.abilities[ability].tmpFixedDiff));
+          });
+          break;
+        case 'total':
+          let sum = 0;
+          charasheet.sort((a, b) => {
+            if (a.data.abilities.sanCurrent < 0) return 1;
+            else if (b.data.abilities.sanCurrent < 0) return -1;
+            function getSum(chara:CharaSheet):number{
+              let sum = 0;
+              sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
+              sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
+              sum += chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff;
+              sum += chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff;
+              sum += chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff;
+              sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
+              sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
+              sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
+              return sum;
+            }
+            return order * (getSum(a) - getSum(b));
           });
           break;
         case 'san':
