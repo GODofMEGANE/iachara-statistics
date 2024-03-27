@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/iachara-statistics/static/css/main.cc227b90.css",
-    "main.js": "/iachara-statistics/static/js/main.679f453c.js",
+    "main.js": "/iachara-statistics/static/js/main.c8cc1df8.js",
     "index.html": "/iachara-statistics/index.html",
     "main.cc227b90.css.map": "/iachara-statistics/static/css/main.cc227b90.css.map",
-    "main.679f453c.js.map": "/iachara-statistics/static/js/main.679f453c.js.map"
+    "main.c8cc1df8.js.map": "/iachara-statistics/static/js/main.c8cc1df8.js.map"
   },
   "entrypoints": [
     "static/css/main.cc227b90.css",
-    "static/js/main.679f453c.js"
+    "static/js/main.c8cc1df8.js"
   ]
 }

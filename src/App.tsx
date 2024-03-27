@@ -656,6 +656,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         else {
           result = `+${Math.floor((strsiz - 57) / 16) + 3}D6`;
         }
+        result += ` (STR+SIZ:${strsiz})`;
         return result;
       case 'memo':
         return chara.data.memo.length.toString() + "文字";
