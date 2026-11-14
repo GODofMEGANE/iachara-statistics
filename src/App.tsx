@@ -274,14 +274,15 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
   function calcStatistics() {
     for (let i = 0; i < charasheet.length; i++) {
       if (charasheet[i].data.abilities.sanCurrent >= 0) {
-        statistics_average.str += charasheet[i].data.abilities.str.value + charasheet[i].data.abilities.str.fixedDiff + charasheet[i].data.abilities.str.tmpFixedDiff;
-        statistics_average.con += charasheet[i].data.abilities.con.value + charasheet[i].data.abilities.con.fixedDiff + charasheet[i].data.abilities.con.tmpFixedDiff;
-        statistics_average.pow += charasheet[i].data.abilities.pow.value + charasheet[i].data.abilities.pow.fixedDiff + charasheet[i].data.abilities.pow.tmpFixedDiff;
-        statistics_average.dex += charasheet[i].data.abilities.dex.value + charasheet[i].data.abilities.dex.fixedDiff + charasheet[i].data.abilities.dex.tmpFixedDiff;
-        statistics_average.app += charasheet[i].data.abilities.app.value + charasheet[i].data.abilities.app.fixedDiff + charasheet[i].data.abilities.app.tmpFixedDiff;
-        statistics_average.siz += charasheet[i].data.abilities.siz.value + charasheet[i].data.abilities.siz.fixedDiff + charasheet[i].data.abilities.siz.tmpFixedDiff;
-        statistics_average.int += charasheet[i].data.abilities.int.value + charasheet[i].data.abilities.int.fixedDiff + charasheet[i].data.abilities.int.tmpFixedDiff;
-        statistics_average.edu += charasheet[i].data.abilities.edu.value + charasheet[i].data.abilities.edu.fixedDiff + charasheet[i].data.abilities.edu.tmpFixedDiff;
+        const div = charasheet[i].data.version === "7th" ? 5 : 1;
+        statistics_average.str += (charasheet[i].data.abilities.str.value + charasheet[i].data.abilities.str.fixedDiff + charasheet[i].data.abilities.str.tmpFixedDiff) / div;
+        statistics_average.con += (charasheet[i].data.abilities.con.value + charasheet[i].data.abilities.con.fixedDiff + charasheet[i].data.abilities.con.tmpFixedDiff) / div;
+        statistics_average.pow += (charasheet[i].data.abilities.pow.value + charasheet[i].data.abilities.pow.fixedDiff + charasheet[i].data.abilities.pow.tmpFixedDiff) / div;
+        statistics_average.dex += (charasheet[i].data.abilities.dex.value + charasheet[i].data.abilities.dex.fixedDiff + charasheet[i].data.abilities.dex.tmpFixedDiff) / div;
+        statistics_average.app += (charasheet[i].data.abilities.app.value + charasheet[i].data.abilities.app.fixedDiff + charasheet[i].data.abilities.app.tmpFixedDiff) / div;
+        statistics_average.siz += (charasheet[i].data.abilities.siz.value + charasheet[i].data.abilities.siz.fixedDiff + charasheet[i].data.abilities.siz.tmpFixedDiff) / div;
+        statistics_average.int += (charasheet[i].data.abilities.int.value + charasheet[i].data.abilities.int.fixedDiff + charasheet[i].data.abilities.int.tmpFixedDiff) / div;
+        statistics_average.edu += (charasheet[i].data.abilities.edu.value + charasheet[i].data.abilities.edu.fixedDiff + charasheet[i].data.abilities.edu.tmpFixedDiff) / div;
         statistics_average.validNumber++;
       }
       else {
@@ -346,7 +347,8 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
   return (
     <div className='outline'>
       <div id="statistics">
-        全キャラシ数:{charasheet.length} (かっこ内の数値は期待値との差分です)<br />
+        全キャラシ数:{charasheet.length} <br />
+        (かっこ内の数値は期待値との差分です、7版は数値を÷5して表示しています)<br />
         <p>
           平均STR:{Math.round(statistics_average.str * 100) / 100} ({numberWithPlus(statistics_average.str - 10.5)})<br />
           平均CON:{Math.round(statistics_average.con * 100) / 100} ({numberWithPlus(statistics_average.con - 10.5)})<br />
@@ -425,7 +427,7 @@ function Filters({ filt_mode, setFiltMode }: { filt_mode: SortAndFilterMode, set
           case "update":
             return (new Date(value)).toLocaleDateString('ja-JP');
           case "db":
-            const db_list = ["-1d6", "-1d4", "+0", "+1d4", "+1d6", "+1d6以上"];
+            const db_list = ["-1d6(7版:-2)", "-1d4(7版:-1)", "+0", "+1d4", "+1d6", "+1d6以上"];
             if (value > 5) {
               value = 5;
             }
@@ -563,7 +565,9 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
       case 'san':
         return (chara.data.abilities.sanCurrent >= filt.min && chara.data.abilities.sanCurrent <= filt.max);
       case 'db':
-        const db_list = [[2, 12], [13, 16], [17, 24], [25, 32], [33, 40], [41, Infinity]];
+        const db_list = chara.data.version === "7th"
+          ? [[2, 64], [65, 84], [85, 124], [125, 164], [165, 204], [205, Infinity]]
+          : [[2, 12], [13, 16], [17, 24], [25, 32], [33, 40], [41, Infinity]];
         if (filt.min > 5) filt.min = 5;
         if (filt.max > 5) filt.max = 5;
         return ((chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) + (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) >= db_list[filt.min][0] && (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) + (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff) <= db_list[filt.max][1]);
@@ -635,26 +639,51 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         }
         let strsiz = (chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff) + (chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff);
         let result = "不明";
-        if ((2 <= strsiz) && (strsiz <= 12)) {
-          result = "-1D6";
-        }
-        else if ((13 <= strsiz) && (strsiz <= 16)) {
-          result = "-1D4";
-        }
-        else if ((17 <= strsiz) && (strsiz <= 24)) {
-          result = "+0";
-        }
-        else if ((25 <= strsiz) && (strsiz <= 32)) {
-          result = "+1D4";
-        }
-        else if ((33 <= strsiz) && (strsiz <= 40)) {
-          result = "+1D6";
-        }
-        else if ((41 <= strsiz) && (strsiz <= 56)) {
-          result = "+2D6";
+        if (chara.data.version === "7th") {
+          if ((2 <= strsiz) && (strsiz <= 64)) {
+            result = "-2";
+          }
+          else if ((65 <= strsiz) && (strsiz <= 84)) {
+            result = "-1";
+          }
+          else if ((85 <= strsiz) && (strsiz <= 124)) {
+            result = "+0";
+          }
+          else if ((125 <= strsiz) && (strsiz <= 164)) {
+            result = "+1D4";
+          }
+          else if ((165 <= strsiz) && (strsiz <= 204)) {
+            result = "+1D6";
+          }
+          else if ((205 <= strsiz) && (strsiz <= 284)) {
+            result = "+2D6";
+          }
+          else {
+            result = `+${Math.floor((strsiz - 285) / 80) + 3}D6`;
+          }
         }
         else {
-          result = `+${Math.floor((strsiz - 57) / 16) + 3}D6`;
+          if ((2 <= strsiz) && (strsiz <= 12)) {
+            result = "-1D6";
+          }
+          else if ((13 <= strsiz) && (strsiz <= 16)) {
+            result = "-1D4";
+          }
+          else if ((17 <= strsiz) && (strsiz <= 24)) {
+            result = "+0";
+          }
+          else if ((25 <= strsiz) && (strsiz <= 32)) {
+            result = "+1D4";
+          }
+          else if ((33 <= strsiz) && (strsiz <= 40)) {
+            result = "+1D6";
+          }
+          else if ((41 <= strsiz) && (strsiz <= 56)) {
+            result = "+2D6";
+          }
+          else {
+            result = `+${Math.floor((strsiz - 57) / 16) + 3}D6`;
+          }
         }
         result += ` (STR+SIZ:${strsiz})`;
         return result;
@@ -738,8 +767,10 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            const a_db = (a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) + (a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff);
-            const b_db = (b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff) + (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff);
+            const a_div = a.data.version === "7th" ? 5 : 1;
+            const b_div = b.data.version === "7th" ? 5 : 1;
+            const a_db = ((a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) + (a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff)) / a_div;
+            const b_db = ((b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff) + (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff)) / b_div;
             return order * (a_db - b_db);
           });
           break;
@@ -791,7 +822,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
               タグ: {chara.data.profile.tag}<br />
               {sort_options.find((elm) => elm.value === mode.sortBy[0].condition)?.label}{mode.sortBy[0].condition === "skill" ? `(${mode.sortBy[0].subCondition})` : ""}:{getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}
               <div className='charasheet-link'>
-                <a target="_blank" href={`https://iachara.com/view/${chara.id}`} rel="noopener noreferrer">いあきゃらで閲覧</a>
+                <a target="_blank" href={`https://iachara.com/view/${chara.id}`} rel="noopener noreferrer">いあきゃらで閲覧 (iachara.com/view/{chara.id})</a>
               </div>
             </div>
           </details>
