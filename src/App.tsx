@@ -1,4 +1,4 @@
-import React, { useState, useMemo, ReactElement } from 'react';
+import React, { useState, useEffect, useMemo, ReactElement } from 'react';
 import './css/App.css';
 import Select from 'react-select';
 import { CiCirclePlus, CiCircleMinus } from "react-icons/ci";
@@ -136,11 +136,37 @@ function App() {
 }
 
 function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetStateAction<IacharaSheet | null>> }) {
-  const [auth_status, setAuthStatus] = useState<'pending' | 'success' | 'failed' | 'none'>('none');
+  const [auth_status, setAuthStatus] = useState<'pending' | 'success' | 'loaded' | 'failed' | 'none'>('none');
   const [login_id, setLoginId] = useState<string>(((document.cookie + ';').match('userid=([^¥S;]*)') ?? "")[1]);
   const [password, setPassword] = useState<string>("");
-  const [raw_json, setRawJson] = useState<string>("");
-  async function getCharasheet(login_id: string, password: string): Promise<IacharaSheet> {
+
+  const targetUrl = window.location.origin + window.location.pathname;
+  const bookmarkletCode = `javascript:(async()=>{if(!location.hostname.includes('iachara.com')){alert('いあきゃら(iachara.com)のページ上で実行してください');return;}if(location.pathname.startsWith('/login')||Array.from(document.querySelectorAll('header a,header button,nav a,nav button')).some(el=>el.textContent&&el.textContent.trim()==='ログイン')){alert('いあきゃらにログインしていません。ログインしてから再度実行してください。');return;}const getAuth=()=>new Promise((resolve)=>{try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('firebase:authUser:')){resolve(JSON.parse(localStorage.getItem(k)));return;}}}catch(e){}const req=indexedDB.open('firebaseLocalStorageDb');req.onsuccess=()=>{try{const db=req.result;if(!db.objectStoreNames.contains('firebaseLocalStorage')){resolve(null);return;}const tx=db.transaction('firebaseLocalStorage','readonly');const store=tx.objectStore('firebaseLocalStorage');const all=store.getAll();all.onsuccess=()=>{const found=(all.result||[]).find(x=>x&&x.fbase_key&&x.fbase_key.startsWith('firebase:authUser:'));resolve(found?found.value:null);};all.onerror=()=>resolve(null);}catch(e){resolve(null);}};req.onerror=()=>resolve(null);});const user=await getAuth();if(!user||user.isAnonymous||!user.stsTokenManager||!user.stsTokenManager.accessToken){alert('いあきゃらにログインしていません。ログインしてから再度実行してください。');return;}let token=user.stsTokenManager.accessToken;try{const payload=JSON.parse(atob(token.split('.')[1]));if(payload.firebase&&payload.firebase.sign_in_provider==='anonymous'){alert('いあきゃらにログインしていません。ログインしてから再度実行してください。');return;}}catch(e){}let res=await fetch('https://apiv3.iachara.com/v3/user/charasheet',{headers:{authorization:'Bearer '+token}});if(!res.ok&&user.stsTokenManager.refreshToken){const r=await fetch('https://securetoken.googleapis.com/v1/token?key=AIzaSyBRP4ntIWd48qx6Liqk-1DnigSMM_xNLgs',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({grant_type:'refresh_token',refresh_token:user.stsTokenManager.refreshToken})});if(r.ok){const d=await r.json();token=d.id_token||d.access_token;res=await fetch('https://apiv3.iachara.com/v3/user/charasheet',{headers:{authorization:'Bearer '+token}});}}if(!res.ok){alert('いあきゃらにログインしていません。ログインしてから再度実行してください。');return;}const raw=await res.json();const data=Array.isArray(raw)?raw.filter(c=>c&&c.data&&c.data.abilities):[];if(!Array.isArray(raw)||data.length===0){alert('いあきゃらにログインしていないか、取得できるキャラシがありません。');return;}const w=window.open('${targetUrl}','_blank');let ack=false;window.addEventListener('message',(e)=>{if(e.data&&e.data.type==='IACHARA_STATS_ACK')ack=true;});const timer=setInterval(()=>{if(ack||!w||w.closed){clearInterval(timer);return;}w.postMessage({type:'IACHARA_CHARASHEET',data},'*');},300);})();`;
+
+  useEffect(() => {
+    function handleMessage(event: MessageEvent) {
+      if (event.data && event.data.type === 'IACHARA_CHARASHEET' && Array.isArray(event.data.data)) {
+        if (event.source && 'postMessage' in event.source) {
+          (event.source as Window).postMessage({ type: 'IACHARA_STATS_ACK' }, event.origin);
+        }
+        const validData = event.data.data.filter((c: any) => c && c.data && c.data.abilities);
+        if (validData.length === 0) {
+          alert('いあきゃらにログインしていません。ログインしてから再度実行してください。');
+          return;
+        }
+        setCharasheet(validData);
+        setAuthStatus('loaded');
+      }
+    }
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [setCharasheet]);
+
+  async function getCharasheet(login_id: string, password: string): Promise<IacharaSheet | null> {
+    if (!login_id || !password) {
+      setAuthStatus('failed');
+      return null;
+    }
     setAuthStatus('pending');
     document.cookie = `userid=${login_id}`;
     const res = await fetch(
@@ -161,6 +187,11 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
     const auth = res.json();
     return auth.then(async (value) => {
       console.log(value);
+      if (!value || value.success !== true) {
+        console.log("Invalid auth");
+        setAuthStatus('failed');
+        return null;
+      }
       const g_res = await fetch(
         "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=AIzaSyBRP4ntIWd48qx6Liqk-1DnigSMM_xNLgs",
         {
@@ -179,21 +210,14 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
       const g_auth = g_res.json();
       return await g_auth.then(async (g_value) => {
         console.log(g_value);
-        if (value.success === true) {
-          setAuthStatus('success');
-          return await (await fetch("https://apiv3.iachara.com/v3/user/charasheet", {
-            "headers": {
-              "authorization": `Bearer ${g_value.idToken}`,
-              "content-type": "application/json",
-            },
-            "method": "GET",
-          })).json();
-        }
-        else {
-          console.log("Invalid auth");
-          setAuthStatus('failed');
-          return null;
-        }
+        setAuthStatus('success');
+        return await (await fetch("https://apiv3.iachara.com/v3/user/charasheet", {
+          "headers": {
+            "authorization": `Bearer ${g_value.idToken}`,
+            "content-type": "application/json",
+          },
+          "method": "GET",
+        })).json();
       })
     })
   }
@@ -201,33 +225,51 @@ function AuthForm({ setCharasheet }: { setCharasheet: React.Dispatch<React.SetSt
   function setCharasheetFromLogin(): void {
     getCharasheet(login_id, password).then((result) => {
       console.log(result);
-      setCharasheet(result);
+      if (result && Array.isArray(result)) {
+        const validData = result.filter((c: any) => c && c.data && c.data.abilities);
+        setCharasheet(validData.length > 0 ? validData : null);
+      } else {
+        setCharasheet(null);
+      }
     })
-  }
-
-  function setCharasheetFromRawjson(): void {
-    try {
-      setCharasheet(JSON.parse(raw_json));
-    } catch (e) {
-      alert("JSONの構文解析に失敗しました");
-    }
   }
 
   return (
     <div className='outline'>
-      ここにいあきゃらのIDとパスワードを入力
-      <input type='text' id='login_id' className='input' value={login_id} onChange={(evt) => { setLoginId(evt.target.value) }} placeholder='ユーザーID' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromLogin(); }} />
-      <input type='password' id='password' className='input' value={password} onChange={(evt) => { setPassword(evt.target.value) }} placeholder='パスワード' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromLogin(); }} />
-      <input type='button' id='submit' value="決定" onClick={setCharasheetFromLogin} />
-      {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) :
-        auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) :
-          auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) :
-            (<span></span>)}
+      <div>
+        ブックマークレットでキャラシを取得する
+        {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+        <a
+          ref={(el) => { if (el) el.setAttribute('href', bookmarkletCode); }}
+          onClick={(e) => { e.preventDefault(); alert("このリンクをブックマークバーにドラッグ＆ドロップして登録し、いあきゃらのページ上でクリックしてください！"); }}
+          style={{
+            display: "inline-block",
+            padding: "0.2rem 0.6rem",
+            backgroundColor: "#A0CED9",
+            color: "#000",
+            borderRadius: "6px",
+            textDecoration: "none",
+            border: "1px solid #666",
+            margin: "0 0.5rem"
+          }}
+        >
+          いあきゃら統計を開く
+        </a>
+        <IoIosInformationCircleOutline className='centered-icon' title={"1.「いあきゃら統計を開く」をブックマークバーにドラッグ＆ドロップ（またはコードをコピーしてブックマークのURLに登録）\n2.いあきゃらにログインした状態で、いあきゃらのページ上で登録したブックマークをクリックすると自動でこのページが開き統計が表示されます"} />
+        {auth_status === 'loaded' ? (<span style={{ color: 'green' }}>読み込み成功!</span>) : (<span></span>)}
+      </div>
       <br />
-      パスワードを入れたくない方はこちらに
-      <input type='text' id='raw_json' className='input' style={{ width: "20rem" }} onChange={(evt) => { setRawJson(evt.target.value) }} placeholder='charasheetのレスポンスをペーストしてね' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromRawjson(); }} />
-      <input type='button' id='submit-rawjson' value="決定" onClick={setCharasheetFromRawjson} />
-      <IoIosInformationCircleOutline className='centered-icon' title={"1.いあきゃらのマイページを開く\n2.F12を押しNetworkタブを開く\n3.一度ページをリロードする\n4.いっぱい出てくるのでNameがcharasheetのものを探してクリックする\n5.右ウインドウでResponseタブをクリックして全てコピー\n6.左の入力欄にペーストしてこのボタンをクリック"} />
+      <div>
+        または、ここにいあきゃらのIDとパスワードを入力して取得
+        <br />
+        <input type='text' id='login_id' className='input' value={login_id} onChange={(evt) => { setLoginId(evt.target.value) }} placeholder='ユーザーID' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromLogin(); }} />
+        <input type='password' id='password' className='input' value={password} onChange={(evt) => { setPassword(evt.target.value) }} placeholder='パスワード' onKeyDown={(e) => { if (e.key === "Enter") setCharasheetFromLogin(); }} />
+        <input type='button' id='submit' value="決定" onClick={setCharasheetFromLogin} />
+          {auth_status === 'pending' ? (<span style={{ color: 'orange' }}>通信中...</span>) :
+          auth_status === 'success' ? (<span style={{ color: 'green' }}>ログイン成功!</span>) :
+          auth_status === 'failed' ? (<span style={{ color: 'red' }}>IDまたはパスワードが間違っています</span>) :
+        (<span></span>)}
+      </div>
     </div>
   )
 }
