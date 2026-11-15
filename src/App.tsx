@@ -350,20 +350,20 @@ function Statistics({ charasheet }: { charasheet: IacharaSheet }) {
         全キャラシ数:{charasheet.length} <br />
         (かっこ内の数値は期待値との差分です、7版は数値を÷5して表示しています)<br />
         <p>
-          平均STR:{Math.round(statistics_average.str * 100) / 100} ({numberWithPlus(statistics_average.str - 10.5)})<br />
-          平均CON:{Math.round(statistics_average.con * 100) / 100} ({numberWithPlus(statistics_average.con - 10.5)})<br />
-          平均POW:{Math.round(statistics_average.pow * 100) / 100} ({numberWithPlus(statistics_average.pow - 10.5)})<br />
-          平均DEX:{Math.round(statistics_average.dex * 100) / 100} ({numberWithPlus(statistics_average.dex - 10.5)})<br />
-          平均APP:{Math.round(statistics_average.app * 100) / 100} ({numberWithPlus(statistics_average.app - 10.5)})<br />
-          平均SIZ:{Math.round(statistics_average.siz * 100) / 100} ({numberWithPlus(statistics_average.siz - 13.0)})<br />
-          平均INT:{Math.round(statistics_average.int * 100) / 100} ({numberWithPlus(statistics_average.int - 13.0)})<br />
-          平均EDU:{Math.round(statistics_average.edu * 100) / 100} ({numberWithPlus(statistics_average.edu - 13.5)})<br />
-          (<span title={"無視したキャラシ\n\n" + ignore_list.abilities.join("\n")}>有効キャラシ数:{statistics_average.validNumber}</span>)<br />
+          平均STR: {Math.round(statistics_average.str * 100) / 100} ({numberWithPlus(statistics_average.str - 10.5)})<br />
+          平均CON: {Math.round(statistics_average.con * 100) / 100} ({numberWithPlus(statistics_average.con - 10.5)})<br />
+          平均POW: {Math.round(statistics_average.pow * 100) / 100} ({numberWithPlus(statistics_average.pow - 10.5)})<br />
+          平均DEX: {Math.round(statistics_average.dex * 100) / 100} ({numberWithPlus(statistics_average.dex - 10.5)})<br />
+          平均APP: {Math.round(statistics_average.app * 100) / 100} ({numberWithPlus(statistics_average.app - 10.5)})<br />
+          平均SIZ: {Math.round(statistics_average.siz * 100) / 100} ({numberWithPlus(statistics_average.siz - 13.0)})<br />
+          平均INT: {Math.round(statistics_average.int * 100) / 100} ({numberWithPlus(statistics_average.int - 13.0)})<br />
+          平均EDU: {Math.round(statistics_average.edu * 100) / 100} ({numberWithPlus(statistics_average.edu - 13.5)})<br />
+          (有効キャラシ数:{statistics_average.validNumber})<IoIosInformationCircleOutline className='centered-icon' title={"無視したキャラシ\n\n" + ignore_list.abilities.join("\n")} /><br />
           <br />
-          平均メモ欄文字数:{Math.round(statistics_average.additional.memoLength * 100) / 100}<br />
-          平均年齢:{Math.round(statistics_average.additional.age.average * 100) / 100}歳(<span title={"無視したキャラシ\n\n" + ignore_list.age.join("\n")}>有効キャラシ数:{statistics_average.additional.age.validNumber}</span>)<br />
-          平均身長:{Math.round(statistics_average.additional.height.average * 100) / 100}cm(<span title={"無視したキャラシ\n\n" + ignore_list.height.join("\n")}>有効キャラシ数:{statistics_average.additional.height.validNumber}</span>)<br />
-          性別割合:<span title={ignore_list.male.join("\n")}>男性 {Math.round(statistics_average.additional.sex.maleRate * 1000) / 10}%</span>/<span title={ignore_list.female.join("\n")}>女性 {Math.round(statistics_average.additional.sex.femaleRate * 1000) / 10}%</span>/<span title={ignore_list.other.join("\n")}>不明 {Math.round(statistics_average.additional.sex.otherRate * 1000) / 10}%</span><br />
+          平均メモ欄文字数: {Math.round(statistics_average.additional.memoLength * 100) / 100}文字<br />
+          平均年齢: {Math.round(statistics_average.additional.age.average * 100) / 100}歳(有効キャラシ数:{statistics_average.additional.age.validNumber})<IoIosInformationCircleOutline className='centered-icon' title={"無視したキャラシ\n\n" + ignore_list.age.join("\n")} /><br />
+          平均身長: {Math.round(statistics_average.additional.height.average * 100) / 100}cm(有効キャラシ数:{statistics_average.additional.height.validNumber})<IoIosInformationCircleOutline className='centered-icon' title={"無視したキャラシ\n\n" + ignore_list.height.join("\n")} /><br />
+          性別割合: <span title={ignore_list.male.join("\n")}>男性 {Math.round(statistics_average.additional.sex.maleRate * 1000) / 10}%</span>/<span title={ignore_list.female.join("\n")}>女性 {Math.round(statistics_average.additional.sex.femaleRate * 1000) / 10}%</span>/<span title={ignore_list.other.join("\n")}>不明 {Math.round(statistics_average.additional.sex.otherRate * 1000) / 10}%</span><br />
         </p>
       </div>
       <hr />
@@ -509,7 +509,9 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     chara.data.battleSkills.static.forEach(function (elm) {
       if (elm.name === skillname) {
         if (skillname === "回避") {
-          answer = ((chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff) * 2 + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
+          const dex = chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff;
+          const default_dodge = chara.data.version === "7th" ? Math.floor(dex / 2) : dex * 2;
+          answer = (default_dodge + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
         }
         else answer = (elm.defaultPoint + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
       }
@@ -527,7 +529,9 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     chara.data.negotiationSkills.static.forEach(function (elm) {
       if (elm.name === skillname) {
         if (skillname === "母国語") {
-          answer = ((chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff) * 5 + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
+          const edu = chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
+          const default_lang = chara.data.version === "7th" ? edu : edu * 5;
+          answer = (default_lang + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
         }
         else answer = (elm.defaultPoint + elm.professionPoint + elm.interestPoint + elm.growthPoint + elm.otherPoint);
       }
@@ -620,8 +624,12 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         if (chara.data.abilities.sanCurrent === -1) {
           return "不明";
         }
-        return (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff).toString();
+        const val = chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff;
+        return chara.data.version === "7th" ? `${val} (${val / 5})` : val.toString();
       case 'total':
+        if (chara.data.abilities.sanCurrent === -1) {
+          return "不明";
+        }
         let sum = 0;
         sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
         sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
@@ -631,7 +639,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
         sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
         sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
-        return sum.toString();
+        return chara.data.version === "7th" ? `${sum} (${sum / 5})` : sum.toString();
       case 'san':
         if (chara.data.abilities.sanCurrent === -1) {
           return "不明";
@@ -689,7 +697,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
             result = `+${Math.floor((strsiz - 57) / 16) + 3}D6`;
           }
         }
-        result += ` (STR+SIZ:${strsiz})`;
+        result += ` (STR+SIZ:${chara.data.version === "7th" ? `${strsiz} (${strsiz / 5})` : strsiz.toString()})`;
         return result;
       case 'memo':
         return chara.data.memo.length.toString() + "文字";
@@ -709,9 +717,60 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
     }
   }
 
+  function isSameRankValue(a: CharaSheet, b: CharaSheet, condition: string, subCondition?: string): boolean {
+    switch (condition) {
+      case 'str':
+      case 'con':
+      case 'pow':
+      case 'dex':
+      case 'app':
+      case 'siz':
+      case 'int':
+      case 'edu':
+        if (a.data.abilities.sanCurrent === -1 || b.data.abilities.sanCurrent === -1) {
+          return a.data.abilities.sanCurrent === b.data.abilities.sanCurrent;
+        }
+        const a_div = a.data.version === "7th" ? 5 : 1;
+        const b_div = b.data.version === "7th" ? 5 : 1;
+        const a_val = (a.data.abilities[condition].value + a.data.abilities[condition].fixedDiff + a.data.abilities[condition].tmpFixedDiff) / a_div;
+        const b_val = (b.data.abilities[condition].value + b.data.abilities[condition].fixedDiff + b.data.abilities[condition].tmpFixedDiff) / b_div;
+        return a_val === b_val;
+      case 'total':
+        if (a.data.abilities.sanCurrent === -1 || b.data.abilities.sanCurrent === -1) {
+          return a.data.abilities.sanCurrent === b.data.abilities.sanCurrent;
+        }
+        const getTotal = (chara: CharaSheet): number => {
+          const div = chara.data.version === "7th" ? 5 : 1;
+          let sum = 0;
+          sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
+          sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
+          sum += chara.data.abilities.pow.value + chara.data.abilities.pow.fixedDiff + chara.data.abilities.pow.tmpFixedDiff;
+          sum += chara.data.abilities.dex.value + chara.data.abilities.dex.fixedDiff + chara.data.abilities.dex.tmpFixedDiff;
+          sum += chara.data.abilities.app.value + chara.data.abilities.app.fixedDiff + chara.data.abilities.app.tmpFixedDiff;
+          sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
+          sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
+          sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
+          return sum / div;
+        }
+        return getTotal(a) === getTotal(b);
+      case 'db':
+        if (a.data.abilities.sanCurrent === -1 || b.data.abilities.sanCurrent === -1) {
+          return a.data.abilities.sanCurrent === b.data.abilities.sanCurrent;
+        }
+        const a_db_div = a.data.version === "7th" ? 5 : 1;
+        const b_db_div = b.data.version === "7th" ? 5 : 1;
+        const a_db = ((a.data.abilities.str.value + a.data.abilities.str.fixedDiff + a.data.abilities.str.tmpFixedDiff) + (a.data.abilities.siz.value + a.data.abilities.siz.fixedDiff + a.data.abilities.siz.tmpFixedDiff)) / a_db_div;
+        const b_db = ((b.data.abilities.str.value + b.data.abilities.str.fixedDiff + b.data.abilities.str.tmpFixedDiff) + (b.data.abilities.siz.value + b.data.abilities.siz.fixedDiff + b.data.abilities.siz.tmpFixedDiff)) / b_db_div;
+        return a_db === b_db;
+      default:
+        return getComparedString(a, condition, subCondition) === getComparedString(b, condition, subCondition);
+    }
+  }
+
   const sortAndFiltered = useMemo<ReactElement[]>(function (): ReactElement[] {
     let chara_rank = 1;
     let chara_index = 1;
+    let prev_chara: CharaSheet | null = null;
     const charalist: ReactElement[] = [];
     mode.sortBy.sort((a, b) => {
       return b.priority - a.priority;
@@ -820,6 +879,10 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         }
       });
       if (is_passed) {
+        if (prev_chara !== null && !isSameRankValue(prev_chara, chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))) {
+          chara_rank = chara_index;
+        }
+        prev_chara = chara;
         if (chara_index <= 5) sns_sentence += `${(getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) === "不明" ? "ランク外" : chara_rank + "位")} ${chara.data.profile.name} (${chara.data.profile.tag}): ${getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))}\n`
         charalist.push(
           <details key={chara.id}>
@@ -834,9 +897,6 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           </details>
         );
         chara_index++;
-        if (index < charasheet.length - 1 && getComparedString(chara, mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined)) !== getComparedString(charasheet[index + 1], mode.sortBy[0].condition, (mode.sortBy[0].subCondition ?? undefined))) {
-          chara_rank = chara_index;
-        }
       }
     });
     charalist.unshift((
