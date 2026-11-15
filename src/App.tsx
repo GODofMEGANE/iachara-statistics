@@ -550,8 +550,11 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
       case 'int':
       case 'edu':
         let ability: 'str' | 'con' | 'pow' | 'dex' | 'app' | 'siz' | 'int' | 'edu' = filt.condition;
-        return ((chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) >= filt.min && (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) <= filt.max);
+        const ability_div = chara.data.version === "7th" ? 5 : 1;
+        const ability_val = (chara.data.abilities[ability].value + chara.data.abilities[ability].fixedDiff + chara.data.abilities[ability].tmpFixedDiff) / ability_div;
+        return (ability_val >= filt.min && ability_val <= filt.max);
       case 'total':
+        const total_div = chara.data.version === "7th" ? 5 : 1;
         let sum = 0;
         sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
         sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
@@ -561,6 +564,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
         sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
         sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
         sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
+        sum /= total_div;
         return ((sum >= filt.min)&&(sum <= filt.max));
       case 'san':
         return (chara.data.abilities.sanCurrent >= filt.min && chara.data.abilities.sanCurrent <= filt.max);
@@ -733,15 +737,17 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
-            return order * ((a.data.abilities[ability].value + a.data.abilities[ability].fixedDiff + a.data.abilities[ability].tmpFixedDiff) - (b.data.abilities[ability].value + b.data.abilities[ability].fixedDiff + b.data.abilities[ability].tmpFixedDiff));
+            const a_div = a.data.version === "7th" ? 5 : 1;
+            const b_div = b.data.version === "7th" ? 5 : 1;
+            return order * (((a.data.abilities[ability].value + a.data.abilities[ability].fixedDiff + a.data.abilities[ability].tmpFixedDiff) / a_div) - ((b.data.abilities[ability].value + b.data.abilities[ability].fixedDiff + b.data.abilities[ability].tmpFixedDiff) / b_div));
           });
           break;
         case 'total':
-          let sum = 0;
           charasheet.sort((a, b) => {
             if (a.data.abilities.sanCurrent < 0) return 1;
             else if (b.data.abilities.sanCurrent < 0) return -1;
             function getSum(chara:CharaSheet):number{
+              const div = chara.data.version === "7th" ? 5 : 1;
               let sum = 0;
               sum += chara.data.abilities.str.value + chara.data.abilities.str.fixedDiff + chara.data.abilities.str.tmpFixedDiff;
               sum += chara.data.abilities.con.value + chara.data.abilities.con.fixedDiff + chara.data.abilities.con.tmpFixedDiff;
@@ -751,7 +757,7 @@ function CharaList({ charasheet, mode }: { charasheet: IacharaSheet, mode: SortA
               sum += chara.data.abilities.siz.value + chara.data.abilities.siz.fixedDiff + chara.data.abilities.siz.tmpFixedDiff;
               sum += chara.data.abilities.int.value + chara.data.abilities.int.fixedDiff + chara.data.abilities.int.tmpFixedDiff;
               sum += chara.data.abilities.edu.value + chara.data.abilities.edu.fixedDiff + chara.data.abilities.edu.tmpFixedDiff;
-              return sum;
+              return sum / div;
             }
             return order * (getSum(a) - getSum(b));
           });
